@@ -1,0 +1,144 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Installation and dependencies &mdash; IPython Tutorial v0.1 documentation</title>
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="IPython Tutorial v0.1 documentation" href="index.html" />
+    <link rel="next" title="Overview and getting started" href="parallel_intro.html" />
+    <link rel="prev" title="Using IPython for parallel computing" href="index.html" /> 
+  </head>
+  <body>
+
+<div style="background-color: white; text-align: left; padding: 10px 10px 15px 15px">
+<a href="index.html"><img src="_static/logo.png" border="0" alt="IPython Documentation"/></a>
+</div>
+
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="parallel_intro.html" title="Overview and getting started"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="Using IPython for parallel computing"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">home</a>|&nbsp;</li>
+        <li><a href="search.html">search</a>|&nbsp;</li>
+       <li><a href="index.html">documentation </a> &raquo;</li>
+ 
+      </ul>
+    </div>
+
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="index.html"
+                        title="previous chapter">Using IPython for parallel computing</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="parallel_intro.html"
+                        title="next chapter">Overview and getting started</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/preamble.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" size="18" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="installation-and-dependencies">
+<h1>Installation and dependencies<a class="headerlink" href="#installation-and-dependencies" title="Permalink to this headline">¶</a></h1>
+<p>You will need IPython 0.11, and pyzmq &gt;= 2.1.4. If you have EPD 7.1, you have both of these, but
+IPython is 0.11.rc1. rc1 is mostly fine, with a few little bugs, but the main difference
+you will notice is that in rc1, specifying values on the command-line does not expect
+a leading <tt class="docutils literal"><span class="pre">--</span></tt>.</p>
+<p>In rc1:</p>
+<div class="highlight-python"><pre>ipython profile=foo --pylab</pre>
+</div>
+<p>It turns out, people hate this, so in dev and the future, this is:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">ipython</span> <span class="o">--</span><span class="n">profile</span><span class="o">=</span><span class="n">foo</span> <span class="o">--</span><span class="n">pylab</span>
+</pre></div>
+</div>
+<p>This pattern is true for all cl <em>assignments</em> (non-assignment flags did not change).</p>
+<p>IPython from master:</p>
+<div class="highlight-python"><pre>git clone git://github.com/ipython/ipython.git</pre>
+</div>
+<p>or without git:</p>
+<div class="highlight-python"><pre>pip install https://github.com/ipython/ipython/tarball/master</pre>
+</div>
+<p>pyzmq-2.1.7 has eggs for various current OSX and Windows Pythons. If we don&#8217;t have an egg
+for you, you can build &amp; install libzmq from <a class="reference external" href="http://www.zeromq.org/area:download">http://www.zeromq.org/area:download</a>.</p>
+<p>After you have libzmq (and run ldconfig to update its cache), pyzmq is
+pip/easy_installable.</p>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="parallel_intro.html" title="Overview and getting started"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="Using IPython for parallel computing"
+             >previous</a> |</li>
+        <li><a href="index.html">home</a>|&nbsp;</li>
+        <li><a href="search.html">search</a>|&nbsp;</li>
+       <li><a href="index.html">documentation </a> &raquo;</li>
+ 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2011, The IPython Development Team.
+      Last updated on Jul 12, 2011.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.7.
+    </div>
+  </body>
+</html>

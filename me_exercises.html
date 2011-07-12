@@ -1,0 +1,169 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Multiplexing Exercises &mdash; IPython Tutorial v0.1 documentation</title>
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="IPython Tutorial v0.1 documentation" href="index.html" />
+    <link rel="next" title="The IPython task interface" href="parallel_task.html" />
+    <link rel="prev" title="IPython’s Direct interface" href="parallel_multiengine.html" /> 
+  </head>
+  <body>
+
+<div style="background-color: white; text-align: left; padding: 10px 10px 15px 15px">
+<a href="index.html"><img src="_static/logo.png" border="0" alt="IPython Documentation"/></a>
+</div>
+
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="parallel_task.html" title="The IPython task interface"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="parallel_multiengine.html" title="IPython’s Direct interface"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">home</a>|&nbsp;</li>
+        <li><a href="search.html">search</a>|&nbsp;</li>
+       <li><a href="index.html">documentation </a> &raquo;</li>
+ 
+      </ul>
+    </div>
+
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Multiplexing Exercises</a><ul>
+<li><a class="reference internal" href="#monte-carlo">Monte Carlo π</a></li>
+<li><a class="reference internal" href="#remote-iterators">Remote Iterators</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="parallel_multiengine.html"
+                        title="previous chapter">IPython&#8217;s Direct interface</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="parallel_task.html"
+                        title="next chapter">The IPython task interface</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/me_exercises.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" size="18" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="multiplexing-exercises">
+<h1>Multiplexing Exercises<a class="headerlink" href="#multiplexing-exercises" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="monte-carlo">
+<h2>Monte Carlo π<a class="headerlink" href="#monte-carlo" title="Permalink to this headline">¶</a></h2>
+<p>A simple toy problem to get a handle on multiple engines is a Monte Carlo approximation
+of π.</p>
+<p>Let&#8217;s say we have a dartboard with a round target inscribed on a square board.  If you
+threw darts randomly, and they land evenly distributed on the square board, how many
+darts would you expect to hit the target?</p>
+<img alt="_images/darts.png" src="_images/darts.png" />
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">random</span> <span class="kn">import</span> <span class="n">random</span>
+<span class="kn">from</span> <span class="nn">math</span> <span class="kn">import</span> <span class="n">pi</span>
+
+<span class="k">def</span> <span class="nf">mcpi</span><span class="p">(</span><span class="n">nsamples</span><span class="p">):</span>
+    <span class="n">s</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">xrange</span><span class="p">(</span><span class="n">nsamples</span><span class="p">):</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">random</span><span class="p">()</span>
+        <span class="n">y</span> <span class="o">=</span> <span class="n">random</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">x</span><span class="o">*</span><span class="n">x</span> <span class="o">+</span> <span class="n">y</span><span class="o">*</span><span class="n">y</span> <span class="o">&lt;=</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">s</span><span class="o">+=</span><span class="mi">1</span>
+    <span class="k">return</span> <span class="mf">4.</span><span class="o">*</span><span class="n">s</span><span class="o">/</span><span class="n">nsamples</span>
+
+<span class="k">def</span> <span class="nf">multi_mcpi</span><span class="p">(</span><span class="n">dview</span><span class="p">,</span> <span class="n">nsamples</span><span class="p">):</span>
+    <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s">&quot;you write this&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>It takes a lot of samples to get a good approximation.  Can you write a function that
+will use your engines to break up the work?</p>
+<p><a class="reference external" href="_static/soln/mcpi_soln.py">mcpi solution</a></p>
+</div>
+<div class="section" id="remote-iterators">
+<h2>Remote Iterators<a class="headerlink" href="#remote-iterators" title="Permalink to this headline">¶</a></h2>
+<p>Can you create an object that iterates through a remote iterable?</p>
+<div class="highlight-ipython"><div class="highlight"><pre><span class="gp">In [10]: </span><span class="n">dview</span><span class="p">[</span><span class="s">&#39;a&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">range</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span>
+
+<span class="gp">In [11]: </span><span class="n">ra</span> <span class="o">=</span> <span class="n">remote_iterator</span><span class="p">(</span><span class="n">dview</span><span class="p">,</span> <span class="s">&#39;a&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><a class="reference external" href="_static/soln/remoteiter.py">remote iter solution</a></p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="parallel_task.html" title="The IPython task interface"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="parallel_multiengine.html" title="IPython’s Direct interface"
+             >previous</a> |</li>
+        <li><a href="index.html">home</a>|&nbsp;</li>
+        <li><a href="search.html">search</a>|&nbsp;</li>
+       <li><a href="index.html">documentation </a> &raquo;</li>
+ 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2011, The IPython Development Team.
+      Last updated on Jul 12, 2011.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.7.
+    </div>
+  </body>
+</html>

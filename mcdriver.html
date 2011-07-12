@@ -1,0 +1,299 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Solution &mdash; IPython Tutorial v0.1 documentation</title>
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="IPython Tutorial v0.1 documentation" href="index.html" />
+    <link rel="next" title="More details of ØMQ and pyzmq" href="zeromq.html" />
+    <link rel="prev" title="Parallel examples" href="parallel_demos.html" /> 
+  </head>
+  <body>
+
+<div style="background-color: white; text-align: left; padding: 10px 10px 15px 15px">
+<a href="index.html"><img src="_static/logo.png" border="0" alt="IPython Documentation"/></a>
+</div>
+
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="zeromq.html" title="More details of ØMQ and pyzmq"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="parallel_demos.html" title="Parallel examples"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">home</a>|&nbsp;</li>
+        <li><a href="search.html">search</a>|&nbsp;</li>
+       <li><a href="index.html">documentation </a> &raquo;</li>
+ 
+      </ul>
+    </div>
+
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="parallel_demos.html"
+                        title="previous chapter">Parallel examples</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="zeromq.html"
+                        title="next chapter">More details of ØMQ and pyzmq</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/mcdriver.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" size="18" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="solution">
+<span id="mcdriver"></span><h1>Solution<a class="headerlink" href="#solution" title="Permalink to this headline">¶</a></h1>
+<p>To run this code in parallel, we will use IPython&#8217;s <tt class="xref py py-class docutils literal"><span class="pre">LoadBalancedView</span></tt> class,
+which distributes work to the engines using dynamic load balancing. This
+view is a wrapper of the <tt class="xref py py-class docutils literal"><span class="pre">Client</span></tt> class shown in
+the previous example. The parallel calculation using <tt class="xref py py-class docutils literal"><span class="pre">LoadBalancedView</span></tt> can
+be found in the file <tt class="file docutils literal"><span class="pre">mcpricer.py</span></tt>. The code in this file creates a
+<tt class="xref py py-class docutils literal"><span class="pre">LoadBalancedView</span></tt> instance and then submits a set of tasks using
+<tt class="xref py py-meth docutils literal"><span class="pre">LoadBalancedView.apply()</span></tt> that calculate the option prices for different
+volatilities and strike prices. The results are then plotted as a 2D contour
+plot using Matplotlib.</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="c">#!/usr/bin/env python</span>
+<span class="sd">&quot;&quot;&quot;Run a Monte-Carlo options pricer in parallel.&quot;&quot;&quot;</span>
+
+<span class="c">#-----------------------------------------------------------------------------</span>
+<span class="c"># Imports</span>
+<span class="c">#-----------------------------------------------------------------------------</span>
+
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">import</span> <span class="nn">time</span>
+<span class="kn">from</span> <span class="nn">IPython.parallel</span> <span class="kn">import</span> <span class="n">Client</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">mcpricer</span> <span class="kn">import</span> <span class="n">price_options</span>
+<span class="kn">from</span> <span class="nn">matplotlib</span> <span class="kn">import</span> <span class="n">pyplot</span> <span class="k">as</span> <span class="n">plt</span>
+
+<span class="c">#-----------------------------------------------------------------------------</span>
+<span class="c"># Setup parameters for the run</span>
+<span class="c">#-----------------------------------------------------------------------------</span>
+
+<span class="k">def</span> <span class="nf">ask_question</span><span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="n">the_type</span><span class="p">,</span> <span class="n">default</span><span class="p">):</span>
+    <span class="n">s</span> <span class="o">=</span> <span class="s">&#39;</span><span class="si">%s</span><span class="s"> [</span><span class="si">%r</span><span class="s">]: &#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="n">the_type</span><span class="p">(</span><span class="n">default</span><span class="p">))</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="nb">raw_input</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">result</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">the_type</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">the_type</span><span class="p">(</span><span class="n">default</span><span class="p">)</span>
+
+<span class="n">cluster_profile</span> <span class="o">=</span> <span class="n">ask_question</span><span class="p">(</span><span class="s">&quot;Cluster profile&quot;</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="s">&quot;default&quot;</span><span class="p">)</span>
+<span class="n">price</span> <span class="o">=</span> <span class="n">ask_question</span><span class="p">(</span><span class="s">&quot;Initial price&quot;</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="mf">100.0</span><span class="p">)</span>
+<span class="n">rate</span> <span class="o">=</span> <span class="n">ask_question</span><span class="p">(</span><span class="s">&quot;Interest rate&quot;</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="mf">0.05</span><span class="p">)</span>
+<span class="n">days</span> <span class="o">=</span> <span class="n">ask_question</span><span class="p">(</span><span class="s">&quot;Days to expiration&quot;</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="mi">260</span><span class="p">)</span>
+<span class="n">paths</span> <span class="o">=</span> <span class="n">ask_question</span><span class="p">(</span><span class="s">&quot;Number of MC paths&quot;</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="mi">10000</span><span class="p">)</span>
+<span class="n">n_strikes</span> <span class="o">=</span> <span class="n">ask_question</span><span class="p">(</span><span class="s">&quot;Number of strike values&quot;</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="mi">5</span><span class="p">)</span>
+<span class="n">min_strike</span> <span class="o">=</span> <span class="n">ask_question</span><span class="p">(</span><span class="s">&quot;Min strike price&quot;</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="mf">90.0</span><span class="p">)</span>
+<span class="n">max_strike</span> <span class="o">=</span> <span class="n">ask_question</span><span class="p">(</span><span class="s">&quot;Max strike price&quot;</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="mf">110.0</span><span class="p">)</span>
+<span class="n">n_sigmas</span> <span class="o">=</span> <span class="n">ask_question</span><span class="p">(</span><span class="s">&quot;Number of volatility values&quot;</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="mi">5</span><span class="p">)</span>
+<span class="n">min_sigma</span> <span class="o">=</span> <span class="n">ask_question</span><span class="p">(</span><span class="s">&quot;Min volatility&quot;</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">)</span>
+<span class="n">max_sigma</span> <span class="o">=</span> <span class="n">ask_question</span><span class="p">(</span><span class="s">&quot;Max volatility&quot;</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="mf">0.4</span><span class="p">)</span>
+
+<span class="n">strike_vals</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="n">min_strike</span><span class="p">,</span> <span class="n">max_strike</span><span class="p">,</span> <span class="n">n_strikes</span><span class="p">)</span>
+<span class="n">sigma_vals</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="n">min_sigma</span><span class="p">,</span> <span class="n">max_sigma</span><span class="p">,</span> <span class="n">n_sigmas</span><span class="p">)</span>
+
+<span class="c">#-----------------------------------------------------------------------------</span>
+<span class="c"># Setup for parallel calculation</span>
+<span class="c">#-----------------------------------------------------------------------------</span>
+
+<span class="c"># The Client is used to setup the calculation and works with all</span>
+<span class="c"># engines.</span>
+<span class="n">c</span> <span class="o">=</span> <span class="n">Client</span><span class="p">(</span><span class="n">profile</span><span class="o">=</span><span class="n">cluster_profile</span><span class="p">)</span>
+
+<span class="c"># A LoadBalancedView is an interface to the engines that provides dynamic load </span>
+<span class="c"># balancing at the expense of not knowing which engine will execute the code.</span>
+<span class="n">view</span> <span class="o">=</span> <span class="n">c</span><span class="o">.</span><span class="n">load_balanced_view</span><span class="p">()</span>
+
+<span class="c"># Initialize the common code on the engines. This Python module has the</span>
+<span class="c"># price_options function that prices the options.</span>
+
+<span class="c">#-----------------------------------------------------------------------------</span>
+<span class="c"># Perform parallel calculation</span>
+<span class="c">#-----------------------------------------------------------------------------</span>
+
+<span class="k">print</span> <span class="s">&quot;Running parallel calculation over strike prices and volatilities...&quot;</span>
+<span class="k">print</span> <span class="s">&quot;Strike prices: &quot;</span><span class="p">,</span> <span class="n">strike_vals</span>
+<span class="k">print</span> <span class="s">&quot;Volatilities: &quot;</span><span class="p">,</span> <span class="n">sigma_vals</span>
+<span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">flush</span><span class="p">()</span>
+
+<span class="c"># Submit tasks to the TaskClient for each (strike, sigma) pair as a MapTask.</span>
+<span class="n">t1</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+<span class="n">async_results</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="k">for</span> <span class="n">strike</span> <span class="ow">in</span> <span class="n">strike_vals</span><span class="p">:</span>
+    <span class="k">for</span> <span class="n">sigma</span> <span class="ow">in</span> <span class="n">sigma_vals</span><span class="p">:</span>
+        <span class="n">ar</span> <span class="o">=</span> <span class="n">view</span><span class="o">.</span><span class="n">apply_async</span><span class="p">(</span><span class="n">price_options</span><span class="p">,</span> <span class="n">price</span><span class="p">,</span> <span class="n">strike</span><span class="p">,</span> <span class="n">sigma</span><span class="p">,</span> <span class="n">rate</span><span class="p">,</span> <span class="n">days</span><span class="p">,</span> <span class="n">paths</span><span class="p">)</span>
+        <span class="n">async_results</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ar</span><span class="p">)</span>
+
+<span class="k">print</span> <span class="s">&quot;Submitted tasks: &quot;</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">async_results</span><span class="p">)</span>
+<span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">flush</span><span class="p">()</span>
+
+<span class="c"># Block until all tasks are completed.</span>
+<span class="n">c</span><span class="o">.</span><span class="n">wait</span><span class="p">(</span><span class="n">async_results</span><span class="p">)</span>
+<span class="n">t2</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+<span class="n">t</span> <span class="o">=</span> <span class="n">t2</span><span class="o">-</span><span class="n">t1</span>
+
+<span class="k">print</span> <span class="s">&quot;Parallel calculation completed, time = </span><span class="si">%s</span><span class="s"> s&quot;</span> <span class="o">%</span> <span class="n">t</span>
+<span class="k">print</span> <span class="s">&quot;Collecting results...&quot;</span>
+
+<span class="c"># Get the results using TaskClient.get_task_result.</span>
+<span class="n">results</span> <span class="o">=</span> <span class="p">[</span><span class="n">ar</span><span class="o">.</span><span class="n">get</span><span class="p">()</span> <span class="k">for</span> <span class="n">ar</span> <span class="ow">in</span> <span class="n">async_results</span><span class="p">]</span>
+
+<span class="c"># Assemble the result into a structured NumPy array.</span>
+<span class="n">prices</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="n">n_strikes</span><span class="o">*</span><span class="n">n_sigmas</span><span class="p">,</span>
+    <span class="n">dtype</span><span class="o">=</span><span class="p">[(</span><span class="s">&#39;ecall&#39;</span><span class="p">,</span><span class="nb">float</span><span class="p">),(</span><span class="s">&#39;eput&#39;</span><span class="p">,</span><span class="nb">float</span><span class="p">),(</span><span class="s">&#39;acall&#39;</span><span class="p">,</span><span class="nb">float</span><span class="p">),(</span><span class="s">&#39;aput&#39;</span><span class="p">,</span><span class="nb">float</span><span class="p">)]</span>
+<span class="p">)</span>
+
+<span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">price</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">results</span><span class="p">):</span>
+    <span class="n">prices</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">price</span><span class="p">)</span>
+    
+<span class="n">prices</span><span class="o">.</span><span class="n">shape</span> <span class="o">=</span> <span class="p">(</span><span class="n">n_strikes</span><span class="p">,</span> <span class="n">n_sigmas</span><span class="p">)</span>
+<span class="n">strike_mesh</span><span class="p">,</span> <span class="n">sigma_mesh</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">meshgrid</span><span class="p">(</span><span class="n">strike_vals</span><span class="p">,</span> <span class="n">sigma_vals</span><span class="p">)</span>
+
+<span class="k">print</span> <span class="s">&quot;Results are available: strike_mesh, sigma_mesh, prices&quot;</span>
+<span class="k">print</span> <span class="s">&quot;To plot results type &#39;plot_options(sigma_mesh, strike_mesh, prices)&#39;&quot;</span>
+
+<span class="c">#-----------------------------------------------------------------------------</span>
+<span class="c"># Utilities</span>
+<span class="c">#-----------------------------------------------------------------------------</span>
+
+<span class="k">def</span> <span class="nf">plot_options</span><span class="p">(</span><span class="n">sigma_mesh</span><span class="p">,</span> <span class="n">strike_mesh</span><span class="p">,</span> <span class="n">prices</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Make a contour plot of the option price in (sigma, strike) space.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+    
+    <span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">221</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">contourf</span><span class="p">(</span><span class="n">sigma_mesh</span><span class="p">,</span> <span class="n">strike_mesh</span><span class="p">,</span> <span class="n">prices</span><span class="p">[</span><span class="s">&#39;ecall&#39;</span><span class="p">])</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">axis</span><span class="p">(</span><span class="s">&#39;tight&#39;</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">colorbar</span><span class="p">()</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s">&#39;European Call&#39;</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s">&quot;Strike Price&quot;</span><span class="p">)</span>
+
+    <span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">222</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">contourf</span><span class="p">(</span><span class="n">sigma_mesh</span><span class="p">,</span> <span class="n">strike_mesh</span><span class="p">,</span> <span class="n">prices</span><span class="p">[</span><span class="s">&#39;acall&#39;</span><span class="p">])</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">axis</span><span class="p">(</span><span class="s">&#39;tight&#39;</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">colorbar</span><span class="p">()</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s">&quot;Asian Call&quot;</span><span class="p">)</span>
+
+    <span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">223</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">contourf</span><span class="p">(</span><span class="n">sigma_mesh</span><span class="p">,</span> <span class="n">strike_mesh</span><span class="p">,</span> <span class="n">prices</span><span class="p">[</span><span class="s">&#39;eput&#39;</span><span class="p">])</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">axis</span><span class="p">(</span><span class="s">&#39;tight&#39;</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">colorbar</span><span class="p">()</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s">&quot;European Put&quot;</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s">&quot;Volatility&quot;</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s">&quot;Strike Price&quot;</span><span class="p">)</span>
+
+    <span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">224</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">contourf</span><span class="p">(</span><span class="n">sigma_mesh</span><span class="p">,</span> <span class="n">strike_mesh</span><span class="p">,</span> <span class="n">prices</span><span class="p">[</span><span class="s">&#39;aput&#39;</span><span class="p">])</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">axis</span><span class="p">(</span><span class="s">&#39;tight&#39;</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">colorbar</span><span class="p">()</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s">&quot;Asian Put&quot;</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s">&quot;Volatility&quot;</span><span class="p">)</span>
+
+<span class="k">if</span> <span class="n">__name__</span> <span class="o">==</span> <span class="s">&#39;__main__&#39;</span><span class="p">:</span>
+    <span class="n">plot_options</span><span class="p">(</span><span class="n">sigma_mesh</span><span class="p">,</span> <span class="n">strike_mesh</span><span class="p">,</span> <span class="n">prices</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>To use this code, start an IPython cluster using <strong class="command">ipcluster</strong>, open
+IPython in the pylab mode with the file <tt class="file docutils literal"><span class="pre">mcdriver.py</span></tt> in your current
+working directory and then type:</p>
+<div class="highlight-ipython"><div class="highlight"><pre><span class="gp">In [7]: </span><span class="n">run</span> <span class="n">mcdriver</span><span class="o">.</span><span class="n">py</span>
+<span class="go">Submitted tasks:  [0, 1, 2, ...]</span>
+</pre></div>
+</div>
+<p>Once all the tasks have finished, the results can be plotted using the
+<tt class="xref py py-func docutils literal"><span class="pre">plot_options()</span></tt> function. Here we make contour plots of the Asian
+call and Asian put options as function of the volatility and strike price:</p>
+<div class="highlight-ipython"><div class="highlight"><pre><span class="gp">In [8]: </span><span class="n">plot_options</span><span class="p">(</span><span class="n">sigma_vals</span><span class="p">,</span> <span class="n">K_vals</span><span class="p">,</span> <span class="n">prices</span><span class="p">[</span><span class="s">&#39;acall&#39;</span><span class="p">])</span>
+
+<span class="gp">In [9]: </span><span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">()</span>
+<span class="gr">Out[9]: </span><span class="o">&lt;</span><span class="n">matplotlib</span><span class="o">.</span><span class="n">figure</span><span class="o">.</span><span class="n">Figure</span> <span class="nb">object</span> <span class="n">at</span> <span class="mh">0x18c178d0</span><span class="o">&gt;</span>
+
+<span class="gp">In [10]: </span><span class="n">plot_options</span><span class="p">(</span><span class="n">sigma_vals</span><span class="p">,</span> <span class="n">K_vals</span><span class="p">,</span> <span class="n">prices</span><span class="p">[</span><span class="s">&#39;aput&#39;</span><span class="p">])</span>
+</pre></div>
+</div>
+<p>These results are shown in the two figures below. On a 8 core cluster the
+entire calculation (10 strike prices, 10 volatilities, 100,000 paths for each)
+took 30 seconds in parallel, giving a speedup of 7.7x, which is comparable
+to the speedup observed in our previous example.</p>
+<img alt="_images/asian_call.png" src="_images/asian_call.png" />
+<img alt="_images/asian_put.png" src="_images/asian_put.png" />
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="zeromq.html" title="More details of ØMQ and pyzmq"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="parallel_demos.html" title="Parallel examples"
+             >previous</a> |</li>
+        <li><a href="index.html">home</a>|&nbsp;</li>
+        <li><a href="search.html">search</a>|&nbsp;</li>
+       <li><a href="index.html">documentation </a> &raquo;</li>
+ 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2011, The IPython Development Team.
+      Last updated on Jul 12, 2011.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.7.
+    </div>
+  </body>
+</html>

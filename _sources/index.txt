@@ -1,0 +1,34 @@
+.. _parallel_index:
+
+====================================
+Using IPython for parallel computing
+====================================
+
+* Brian Granger, *Cal Poly Physics*
+* Fernando Perez, *UC Berkeley Neuroscience*
+* **Min Ragan-Kelley**, *UC Berkeley Applied Science & Technology*
+
+
+.. toctree::
+   :maxdepth: 2
+
+   preamble.txt
+   parallel_intro.txt
+   performance.txt
+   basic_remote.txt
+   parallel_multiengine.txt
+   me_exercises.txt
+   parallel_task.txt
+   dag_dependencies.txt
+   parallel_demos.txt
+   mcdriver.txt
+   zeromq.txt
+   parallel_connections.txt
+   parallel_mpi.txt
+   parallel_db.txt
+   parallel_transition.txt
+   parallel_security.txt
+   parallel_process.txt
+   parallel_details.txt
+
+

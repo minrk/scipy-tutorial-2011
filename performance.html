@@ -1,0 +1,233 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Performance &mdash; IPython Tutorial v0.1 documentation</title>
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="IPython Tutorial v0.1 documentation" href="index.html" />
+    <link rel="next" title="Basics of remote execution" href="basic_remote.html" />
+    <link rel="prev" title="Overview and getting started" href="parallel_intro.html" /> 
+  </head>
+  <body>
+
+<div style="background-color: white; text-align: left; padding: 10px 10px 15px 15px">
+<a href="index.html"><img src="_static/logo.png" border="0" alt="IPython Documentation"/></a>
+</div>
+
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="basic_remote.html" title="Basics of remote execution"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="parallel_intro.html" title="Overview and getting started"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">home</a>|&nbsp;</li>
+        <li><a href="search.html">search</a>|&nbsp;</li>
+       <li><a href="index.html">documentation </a> &raquo;</li>
+ 
+      </ul>
+    </div>
+
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Performance</a><ul>
+<li><a class="reference internal" href="#latency">Latency</a></li>
+<li><a class="reference internal" href="#throughput">Throughput</a></li>
+<li><a class="reference internal" href="#map">Map</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="parallel_intro.html"
+                        title="previous chapter">Overview and getting started</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="basic_remote.html"
+                        title="next chapter">Basics of remote execution</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/performance.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" size="18" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="performance">
+<span id="id1"></span><h1>Performance<a class="headerlink" href="#performance" title="Permalink to this headline">¶</a></h1>
+<p>How small do my tasks need to be (aka how fast is IPython)?</p>
+<p>In parallel computing, an important relationship to keep in mind is the ratio of
+computation to communication. In order for your simulation to perform reasonably, you must
+keep this ratio high. When testing out a new tool like IPython, it is important to examine
+the limit of granularity that is appropriate. If it takes half a second of overhead to run
+each task, then breaking your work up into millisecond chunks isn&#8217;t going to make sense.</p>
+<div class="section" id="latency">
+<h2>Latency<a class="headerlink" href="#latency" title="Permalink to this headline">¶</a></h2>
+<p>Sending and receiving tiny messages gives us a sense of the minimum time IPython must
+spend building and sending messages around.  This should give us a sense of the <em>minimum</em>
+overhead of the communication system.</p>
+<p>These tests were done on the loopback interface on a fast 8-core machine with 4 engines.
+They should give us a sense of the lower limit on available granularity.</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">def</span> <span class="nf">test_latency</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">n</span><span class="p">):</span>
+    <span class="n">tic</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+    <span class="n">echo</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span>
+    <span class="n">tic</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">xrange</span><span class="p">(</span><span class="n">n</span><span class="p">):</span>
+        <span class="n">v</span><span class="o">.</span><span class="n">apply_async</span><span class="p">(</span><span class="n">echo</span><span class="p">,</span> <span class="s">&#39;&#39;</span><span class="p">)</span>
+    <span class="n">toc</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+    <span class="n">v</span><span class="o">.</span><span class="n">wait</span><span class="p">()</span>
+    <span class="n">tac</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+    <span class="n">sent</span> <span class="o">=</span> <span class="n">toc</span><span class="o">-</span><span class="n">tic</span>
+    <span class="n">roundtrip</span> <span class="o">=</span> <span class="n">tac</span><span class="o">-</span><span class="n">tic</span>
+    <span class="k">return</span> <span class="n">sent</span><span class="p">,</span> <span class="n">roundtrip</span>
+</pre></div>
+</div>
+<div class="figure">
+<img alt="_images/latency.png" src="_images/latency.png" style="width: 600px;" />
+</div>
+<p>The tests were done with the Python scheduler and pure-zmq scheduler, and with/without an
+SSH tunnel. We can see that the Python scheduler can do about 800 tasks/sec, while the
+pure-zmq scheduler gets an extra factor of two, at around 1.5k tasks/sec roundtrip. Purely
+outgoing - the time before the Client code can go on working, is closer to 4k msgs/sec
+sent.  Using an SSH tunnel does not significantly impact performance, as long as you have
+a few tasks to line up.</p>
+<p>Running the same test on a dedicated cluster with up to 128 CPUs shows that IPython
+does scale reasonably well.</p>
+<div class="figure">
+<img alt="_images/latency2.png" src="_images/latency2.png" />
+</div>
+</div>
+<div class="section" id="throughput">
+<h2>Throughput<a class="headerlink" href="#throughput" title="Permalink to this headline">¶</a></h2>
+<p>Echoing numpy arrays is similar to the latency test, but scaling the array size instead
+of the number of messages tests the limits when there is data to be transferred.</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">def</span> <span class="nf">test_latency</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">n</span><span class="p">):</span>
+    <span class="n">A</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">random</span><span class="p">(</span><span class="n">n</span><span class="o">/</span><span class="mi">8</span><span class="p">)</span> <span class="c"># doubles are 8B</span>
+    <span class="n">tic</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+    <span class="n">echo</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span>
+    <span class="n">tic</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">xrange</span><span class="p">(</span><span class="n">n</span><span class="p">):</span>
+        <span class="n">v</span><span class="o">.</span><span class="n">apply_async</span><span class="p">(</span><span class="n">echo</span><span class="p">,</span> <span class="n">A</span><span class="p">)</span>
+    <span class="n">toc</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+    <span class="n">v</span><span class="o">.</span><span class="n">wait</span><span class="p">()</span>
+    <span class="n">tac</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+    <span class="n">sent</span> <span class="o">=</span> <span class="n">toc</span><span class="o">-</span><span class="n">tic</span>
+    <span class="n">roundtrip</span> <span class="o">=</span> <span class="n">tac</span><span class="o">-</span><span class="n">tic</span>
+    <span class="k">return</span> <span class="n">sent</span><span class="p">,</span> <span class="n">roundtrip</span>
+</pre></div>
+</div>
+<div class="figure">
+<img alt="_images/throughput1.png" src="_images/throughput1.png" style="width: 600px;" />
+</div>
+<p>Note that the dotted lines, which measure the time it took to <em>send</em> the arrays
+is <em>not</em> a function of the message size.  This is again thanks to pyzmq&#8217;s
+non-copying sends.  Locally, we can send 100 4MB arrays in ~50 ms, and libzmq
+will take care of actually transmitting the data while we can go on working.</p>
+<p>Plotting the same data, scaled by message size shows that we are saturating the connection
+at ~1Gbps with ~10kB messages when using SSH, and ~10Gbps with ~50kB messages when not
+using SSH.</p>
+<div class="figure">
+<img alt="_images/throughput2.png" src="_images/throughput2.png" style="width: 600px;" />
+</div>
+</div>
+<div class="section" id="map">
+<h2>Map<a class="headerlink" href="#map" title="Permalink to this headline">¶</a></h2>
+<p>Another useful test is seeing how fast <tt class="xref py py-meth docutils literal"><span class="pre">view.map()</span></tt> is, for various numbers of tasks
+and for tasks of varying size.</p>
+<p>These tests were done on <a class="reference external" href="http://aws.amazon.com/">AWS</a> extra-large instances with the help of <a class="reference external" href="http://web.mit.edu/stardev/cluster/">StarCluster</a>, so the IO and CPU
+performance are quite low compared to a physical cluster.</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">def</span> <span class="nf">do_run</span><span class="p">(</span><span class="n">v</span><span class="p">,</span><span class="n">dt</span><span class="p">,</span><span class="n">n</span><span class="p">):</span>
+    <span class="n">ts</span> <span class="o">=</span> <span class="p">[</span><span class="n">dt</span><span class="p">]</span><span class="o">*</span><span class="n">n</span>
+    <span class="n">tic</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+    <span class="n">amr</span> <span class="o">=</span> <span class="n">v</span><span class="o">.</span><span class="n">map_async</span><span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">,</span> <span class="n">ts</span><span class="p">)</span>
+    <span class="n">toc</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+    <span class="n">amr</span><span class="o">.</span><span class="n">get</span><span class="p">()</span>
+    <span class="n">tac</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+    <span class="n">sent</span> <span class="o">=</span> <span class="n">toc</span><span class="o">-</span><span class="n">tic</span>
+    <span class="n">roundtrip</span> <span class="o">=</span> <span class="n">tac</span><span class="o">-</span><span class="n">tic</span>
+    <span class="k">return</span> <span class="n">sent</span><span class="p">,</span> <span class="n">roundtrip</span>
+</pre></div>
+</div>
+<div class="figure">
+<img alt="_images/map.png" src="_images/map.png" />
+</div>
+<p>This shows runs for jobs ranging from 1 to 128 ms, on 4,31,and 63 engines.  On this system,
+millisecond jobs are clearly too small, but by the time individual tasks are &gt; 100 ms,
+IPython overhead is negligible.</p>
+<p>Now let&#8217;s see how we use it for <a class="reference internal" href="basic_remote.html#basic-remote"><em>remote execution</em></a>.</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="basic_remote.html" title="Basics of remote execution"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="parallel_intro.html" title="Overview and getting started"
+             >previous</a> |</li>
+        <li><a href="index.html">home</a>|&nbsp;</li>
+        <li><a href="search.html">search</a>|&nbsp;</li>
+       <li><a href="index.html">documentation </a> &raquo;</li>
+ 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2011, The IPython Development Team.
+      Last updated on Jul 12, 2011.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.7.
+    </div>
+  </body>
+</html>

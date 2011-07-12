@@ -1,0 +1,464 @@
+.. _basic_remote:
+
+==========================
+Basics of remote execution
+==========================
+
+IPython can do complicated multiplexing and load-balancing, but to get a handle
+on the basic principles, we can start with just one engine.
+
+Creating a ``Client`` instance
+==============================
+
+The first step is to import the IPython :mod:`IPython.parallel`
+module and then create a :class:`.Client` instance:
+
+.. sourcecode:: ipython
+
+    In [1]: from IPython import parallel as p
+    
+    In [2]: rc = p.Client()
+
+This form assumes that the default connection information (stored in
+:file:`ipcontroller-client.json` found in :file:`IPYTHON_DIR/profile_default/security`) is
+accurate. If the controller was started on a remote machine, you must copy that connection
+file to the client machine, or enter its contents as arguments to the Client constructor:
+
+.. sourcecode:: ipython
+
+    # If you have copied the json connector file from the controller:
+    In [2]: rc = Client('/path/to/ipcontroller-client.json')
+    # or to connect with a specific profile you have set up:
+    In [3]: rc = Client(profile='mpi')
+    
+
+To make sure there are engines connected to the controller, users can get a list
+of engine ids:
+
+.. sourcecode:: ipython
+
+    In [3]: rc.ids
+    Out[3]: [0, 1, 2, 3]
+
+Here we see that there are four engines ready to do work for us.
+
+For direct execution, we will make use of a :class:`DirectView` object, which can be
+constructed via index-access to the client:
+
+.. sourcecode:: ipython
+
+    In [4]: e0 = rc[0] # just one engine
+    In [5]: e0.block = True # let's be synchronous for now
+
+
+Remote Execution with :func:`apply`
+===================================
+
+It's all about:
+
+.. sourcecode:: python
+
+    view.apply(f, *args, **kwargs)
+
+Once you have a :class:`View`, then most of what you
+need to do to make calls happen remotely is to simply turn function calls into calls
+to apply.  For instance:
+
+.. sourcecode:: python
+
+    import numpy
+    
+    def get_norms(A, levels=[2]):
+        norms = []
+        for level in levels:
+            norms.append(numpy.linalg.norm(A, level))
+        return norms
+    
+    A = numpy.random.random(1024)
+    get_norms(A, levels=[1,2,3,numpy.inf])
+        
+
+To call this remotely, simply replace ``get_norms(`` with ``e0.apply(get_norms,``:
+
+.. sourcecode:: python
+
+    e0.apply(get_norms, A, levels=[1,2,3,numpy.inf])
+
+This replacement is generally true.
+
+Note that this will probably raise a NameError on numpy.  The simplest way to import
+numpy is to do:
+
+.. sourcecode:: ipython
+
+    In [10]: e0.execute('import numpy')
+
+
+But if you want to simultaneously import modules locally and globally, you can use
+:meth:`view.sync_imports`:
+
+.. sourcecode:: ipython
+
+    In [11]: with e0.sync_imports():
+       ....:    import numpy
+    Out[11]: importing numpy on engine(s)
+
+Functions don't have to be interactively defined, you can use module functions as well:
+
+.. sourcecode:: ipython
+
+    In [12]: e0.apply(numpy.linalg.norm, A, 2)
+    Out[12]: 512.128964
+
+
+execute and run
+---------------
+
+You can also run files or strings with :meth:`run` and :meth:`execute` respectively.
+
+For instance, I have a script :file:`myscript.py` that defines a function :func:`mysquare`:
+
+.. sourcecode:: python
+
+    import math
+    import numpy
+    import sys
+
+    a=5
+
+    def mysquare(x):
+        return x*x
+
+
+I can run that remotely, just like I can locally with ``%run``, and then I will have
+``mysquare``, and any imports and globals from the script in the engine's namespace:
+
+.. sourcecode:: ipython
+
+    In [12]: e0.run('myscript.py')
+    
+    In [13]: e0.execute('b=mysquare(a)')
+
+    In [14]: e0['a']
+    Out[14]: 5
+
+    In [14]: e0['b']
+    Out[14]: 25
+    
+
+Remote function decorators
+--------------------------
+
+Remote functions are just like normal functions, but when they are called,
+they execute on one or more engines, rather than locally. IPython provides
+a decorator that lets a function always be called remotely:
+
+.. sourcecode:: ipython
+
+    In [10]: @e0.remote(block=True)
+       ....: def getpid():
+       ....:     import os
+       ....:     return os.getpid()
+       ....:
+
+    In [11]: getpid()
+    Out[11]: 12345
+
+    In [12]: os.getpid()
+    Out[12]: 12386
+
+
+Working with the engine namespace
+---------------------------------
+
+The namespace on the engine is accessible to your functions as ``globals``.  So if
+you want to work with values that exist, you can use global variables.
+
+.. sourcecode:: ipython
+
+    In [20]: def inc_a(increment):
+       ....:    global a
+       ....:    a = a+increment
+
+And just like the rest of Python, you don't have to specify global variables if you aren't
+assigning to them:
+
+.. sourcecode:: python
+
+    In [20]: def mul_by_a(b):
+       ....:    return a*b
+    
+    In [21]: e0['a'] = 10
+    
+    In [22]: e0.apply(mul_by_a, 2)
+    Out[22]: 20
+
+
+Moving Python objects around
+============================
+
+In addition to calling functions and executing code on engines, you can
+transfer Python objects to and from your IPython session and the engines. In
+IPython, these operations are called :meth:`push` (sending an object to the
+engines) and :meth:`pull` (getting an object from the engines).
+
+Basic push and pull
+-------------------
+
+Here are some examples of how you use :meth:`push` and :meth:`pull`:
+
+.. sourcecode:: ipython
+
+    In [38]: e0.push(dict(a=1.03234,b=3453))
+
+    In [39]: e0.pull('a')
+    Out[39]: 1.03234
+
+    In [40]: e0.pull('b')
+    Out[40]: 3453
+
+    In [41]: e0.pull(('a','b'))
+    Out[41]: [1.03234, 3453]
+    
+    In [43]: e0.push(dict(c='speed'))
+
+In non-blocking mode :meth:`push` and :meth:`pull` also return
+:class:`AsyncResult` objects:
+
+.. sourcecode:: ipython
+
+    In [48]: ar = e0.pull('a', block=False)
+
+    In [49]: ar.get()
+    Out[49]: 1.03234
+
+
+Dictionary interface
+--------------------
+
+Since a Python namespace is just a :class:`dict`, :class:`DirectView` objects provide
+dictionary-style access by key and methods such as :meth:`get` and
+:meth:`update` for convenience. This make the remote namespaces of the engines
+appear as a local dictionary. Underneath, these methods call :meth:`apply`:
+
+.. sourcecode:: ipython
+
+    In [51]: e0['a']=['foo','bar']
+
+    In [52]: e0['a']
+    Out[52]: ['foo', 'bar']
+
+
+Non-blocking execution
+----------------------
+
+In non-blocking mode, :meth:`apply` submits the command to be executed and
+then returns a :class:`AsyncResult` object immediately. The
+:class:`AsyncResult` object gives you a way of getting a result at a later
+time through its :meth:`get` method.
+
+.. Note::
+
+    The :class:`AsyncResult` object provides a superset of the interface in 
+    :py:class:`multiprocessing.pool.AsyncResult`.  See the 
+    `official Python documentation <http://docs.python.org/library/multiprocessing#multiprocessing.pool.AsyncResult>`_
+    for more.
+
+
+This allows you to quickly submit long running commands without blocking your
+local Python/IPython session:
+
+.. sourcecode:: ipython
+
+    # define our function
+    In [6]: def wait(t):
+      ....:     import time
+      ....:     tic = time.time()
+      ....:     time.sleep(t)
+      ....:     return time.time()-tic
+
+    # In non-blocking mode
+    In [7]: ar = e0.apply_async(wait, 2)
+
+    # Now block for the result
+    In [8]: ar.get()
+    Out[8]: 2.0006198883056641
+
+    # Again in non-blocking mode
+    In [9]: ar = e0.apply_async(wait, 10)
+
+    # Poll to see if the result is ready
+    In [10]: ar.ready()
+    Out[10]: False
+
+    # ask for the result, but wait a maximum of 1 second:
+    In [45]: ar.get(1)
+    ---------------------------------------------------------------------------
+    TimeoutError                              Traceback (most recent call last)
+    /home/you/<ipython-input-45-7cd858bbb8e0> in <module>()
+    ----> 1 ar.get(1)
+
+    /path/to/site-packages/IPython/parallel/asyncresult.pyc in get(self, timeout)
+         62                 raise self._exception
+         63         else:
+    ---> 64             raise error.TimeoutError("Result not ready.")
+         65
+         66     def ready(self):
+
+    TimeoutError: Result not ready.
+
+For convenience, you can set ``block`` for a single call with the extra sync/async methods:
+
+.. sourcecode:: ipython
+
+    In [5]: view.apply<tab>
+    view.apply  view.apply_async  view.apply_sync
+
+
+
+AsyncResults have metadata
+--------------------------
+
+AsyncResult objects have metadata about the execution.
+
+.. sourcecode:: ipython
+
+    # In non-blocking mode
+    In [7]: ar = e0.apply_async(wait, 2)
+    In [8]: ar.get()
+    
+    In [9]: ar.metadata
+    Out[9]:
+    {'after': [],
+     'completed': datetime.datetime(2011, 7, 12, 0, 41, 3, 418436),
+     'engine_id': 0,
+     'engine_uuid': u'137c498a-e523-4e8e-a2eb-b4946ce05c92',
+     'follow': [],
+     'msg_id': u'517841ed-3d2b-49ef-9d69-91b7362d2c1c',
+     'received': datetime.datetime(2011, 7, 12, 0, 41, 3, 424675),
+     'started': datetime.datetime(2011, 7, 12, 0, 41, 3, 417561),
+     'status': u'ok',
+     'stderr': '',
+     'stdout': '',
+     'submitted': datetime.datetime(2011, 7, 12, 0, 41, 3, 407432)
+    }
+
+
+Other things to look at
+=======================
+
+
+Remote imports
+--------------
+
+Sometimes you will want to import packages both in your interactive session
+and on your remote engines.  This can be done with the :class:`ContextManager`
+created by a DirectView's :meth:`sync_imports` method:
+
+.. sourcecode:: ipython
+
+    In [69]: with e0.sync_imports():
+       ....:     import numpy
+    importing numpy on engine(s)
+
+Any imports made inside the block will also be performed on the view's engines.
+sync_imports also takes a `local` boolean flag that defaults to True, which specifies
+whether the local imports should also be performed.  However, support for `local=False`
+has not been implemented, so only packages that can be imported locally will work
+this way.
+
+You can also specify imports via the ``@require`` decorator.  This is a decorator
+designed for use in Dependencies, but can be used to handle remote imports as well.
+Modules or module names passed to ``@require`` will be imported before the decorated
+function is called.  If they cannot be imported, the decorated function will never
+execution, and will fail with an UnmetDependencyError.
+
+.. sourcecode:: ipython
+
+    In [69]: from IPython.parallel import require
+
+    In [70]: @requre('re'):
+       ....: def findall(pat, x):
+       ....:     # re is guaranteed to be available
+       ....:     return re.findall(pat, x)
+          
+    # you can also pass modules themselves, that you already have locally:
+    In [71]: @requre(time):
+       ....: def wait(t):
+       ....:     time.sleep(t)
+       ....:     return t
+
+.. _remote_exceptions:
+
+Remote exceptions
+-----------------
+
+When you raise an error remotely, a RemoteError gets raised locally when
+you ask for the result.  This happens right away, during blocking execution:
+
+.. sourcecode:: ipython
+
+    In [58]: e0.execute('1/0', block=True)
+    ---------------------------------------------------------------------------
+    RemoteError                               Traceback (most recent call last)
+    /Users/you/<ipython-input-58-979e7b2709c5> in <module>()
+    ----> 1 e0.execute('1/0', block=True)
+    ...
+    /path/to/python/site-packages/IPython/parallel/client/asyncresult.pyc in get(self, timeout)
+        101                 return self._result
+        102             else:
+    --> 103                 raise self._exception
+        104         else:
+        105             raise error.TimeoutError("Result not ready.")
+
+    RemoteError: ZeroDivisionError(integer division or modulo by zero)
+    Traceback (most recent call last):
+      File "/path/to/python/site-packages/IPython/parallel/engine/streamkernel.py", line 337, in apply_request
+        exec code in working,working
+      File "<string>", line 1, in <module>
+      File "/path/to/python/site-packages/IPython/parallel/util.py", line 360, in _execute
+        exec code in globals()
+      File "<string>", line 1, in <module>
+    ZeroDivisionError: integer division or modulo by zero
+
+Notice how the error message printed when :exc:`RemoteError` is raised has
+the traceback for your remote exception.
+
+
+All of this same error handling magic even works in non-blocking mode:
+
+.. sourcecode:: ipython
+
+    In [83]: e0.block=False
+
+    In [84]: ar = e0.execute('1/0')
+
+    In [85]: ar.get()
+    ---------------------------------------------------------------------------
+    CompositeError                            Traceback (most recent call last)
+    /home/user/<ipython-input-21-8531eb3d26fb> in <module>()
+    ----> 1 ar.get()
+
+    /path/to/site-packages/IPython/parallel/client/asyncresult.pyc in get(self, timeout)
+        101                 return self._result
+        102             else:
+    --> 103                 raise self._exception
+        104         else:
+        105             raise error.TimeoutError("Result not ready.")
+
+    RemoteError: ZeroDivisionError(integer division or modulo by zero)
+    Traceback (most recent call last):
+      File "/path/to/python/site-packages/IPython/parallel/engine/streamkernel.py", line 337, in apply_request
+        exec code in working,working
+      File "<string>", line 1, in <module>
+      File "/path/to/python/site-packages/IPython/parallel/util.py", line 360, in _execute
+        exec code in globals()
+      File "<string>", line 1, in <module>
+    ZeroDivisionError: integer division or modulo by zero
+
+
+Moving on
+=========
+
+Now that we are familiar with the basic principles of remote execution with IPython,
+let's try some actual parallel work.

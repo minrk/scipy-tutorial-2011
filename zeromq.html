@@ -1,0 +1,214 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>More details of ØMQ and pyzmq &mdash; IPython Tutorial v0.1 documentation</title>
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="IPython Tutorial v0.1 documentation" href="index.html" />
+    <link rel="next" title="Connection Diagrams of The IPython ZMQ Cluster" href="parallel_connections.html" />
+    <link rel="prev" title="Solution" href="mcdriver.html" /> 
+  </head>
+  <body>
+
+<div style="background-color: white; text-align: left; padding: 10px 10px 15px 15px">
+<a href="index.html"><img src="_static/logo.png" border="0" alt="IPython Documentation"/></a>
+</div>
+
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="parallel_connections.html" title="Connection Diagrams of The IPython ZMQ Cluster"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="mcdriver.html" title="Solution"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">home</a>|&nbsp;</li>
+        <li><a href="search.html">search</a>|&nbsp;</li>
+       <li><a href="index.html">documentation </a> &raquo;</li>
+ 
+      </ul>
+    </div>
+
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">More details of ØMQ and pyzmq</a><ul>
+<li><a class="reference internal" href="#creating-some-sockets">Creating some Sockets</a></li>
+<li><a class="reference internal" href="#non-copying-sends">non-copying sends</a></li>
+<li><a class="reference internal" href="#exercise">Exercise</a></li>
+<li><a class="reference internal" href="#using-pyzmq-for-inter-engine-communication">Using pyzmq for inter-engine communication</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="mcdriver.html"
+                        title="previous chapter">Solution</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="parallel_connections.html"
+                        title="next chapter">Connection Diagrams of The IPython ZMQ Cluster</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/zeromq.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" size="18" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="more-details-of-omq-and-pyzmq">
+<h1>More details of ØMQ and pyzmq<a class="headerlink" href="#more-details-of-omq-and-pyzmq" title="Permalink to this headline">¶</a></h1>
+<p>ØMQ is a fast, lightweight messaging library, and pyzmq is the Python bindings.</p>
+<p>ØMQ in 100 words (From the excellent <a class="reference external" href="zguide">Guide</a>):</p>
+<p>ØMQ (ZeroMQ, 0MQ, zmq) looks like an embeddable networking library but acts like a
+concurrency framework. It gives you sockets that carry whole messages across various
+transports like in-process, inter-process, TCP, and multicast. You can connect sockets
+N-to-N with patterns like fanout, pub-sub, task distribution, and request-reply. It&#8217;s fast
+enough to be the fabric for clustered products. Its asynchronous I/O model gives you
+scalable multicore applications, built as asynchronous message-processing tasks. It has a
+score of language APIs and runs on most operating systems. ØMQ is from iMatix and is LGPL
+open source.</p>
+<p>ØMQ works with a variety of socket types, each of which specifies a different send/recv
+pattern:</p>
+<p>REQ : send/recv/send (counterpart: REP)</p>
+<p>REP : recv/send/recv (counterpart: REQ)</p>
+<p>XREQ: LRU load-balanced requests (counterpart: XREP)</p>
+<p>XREP: IDENTITY-routed replies (counterpart: XREQ)</p>
+<p>PUB : send-only, to all peers (counterpart: SUB)</p>
+<p>SUB : recv-only, from all peers (counterpart: PUB)</p>
+<p>PUSH: send-only, load-balanced across peers (counterpart: PULL)</p>
+<p>PULL: recv-only, fair-queued among peers (counterpart: PUSH)</p>
+<p>PAIR: symmetric exclusive-pair</p>
+<p>XREQ is also called a DEALER, and XREP is called ROUTER, which are new, more descriptive
+names.</p>
+<div class="figure">
+<img alt="_images/allconnections.png" src="_images/allconnections.png" />
+<p class="caption">IPython&#8217;s connection diagram</p>
+</div>
+<p>IPython uses MonitoredQueue devices, as schedulers that relay messages between engines and
+clients, but <em>also</em> send every message to the Hub, which uses the information to track the
+state of the cluster.</p>
+<div class="section" id="creating-some-sockets">
+<h2>Creating some Sockets<a class="headerlink" href="#creating-some-sockets" title="Permalink to this headline">¶</a></h2>
+<p>With ØMQ, you always create a context first. Typically, you have just one Context per
+process, and can use the classmethod <tt class="xref py py-meth docutils literal"><span class="pre">zmq.Context.instance()</span></tt> to create it.  Then
+you use the Context&#8217;s <tt class="xref py py-meth docutils literal"><span class="pre">socket()</span></tt> method to create sockets of various types.</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">zmq</span>
+
+<span class="n">ctx</span> <span class="o">=</span> <span class="n">zmq</span><span class="o">.</span><span class="n">Context</span><span class="o">.</span><span class="n">instance</span><span class="p">()</span>
+
+<span class="n">a</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">socket</span><span class="p">(</span><span class="n">zmq</span><span class="o">.</span><span class="n">PAIR</span><span class="p">)</span>
+<span class="n">b</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">socket</span><span class="p">(</span><span class="n">zmq</span><span class="o">.</span><span class="n">PIAR</span><span class="p">)</span>
+
+<span class="n">p</span> <span class="o">=</span> <span class="n">a</span><span class="o">.</span><span class="n">bind_to_random_port</span><span class="p">(</span><span class="s">&#39;tcp://127.0.0.1&#39;</span><span class="p">)</span>
+<span class="n">b</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s">&#39;tcp://127.0.0.1:</span><span class="si">%i</span><span class="s">&#39;</span><span class="o">%</span><span class="n">p</span><span class="p">)</span>
+
+<span class="n">a</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="s">&#39;hi&#39;</span><span class="p">)</span>
+<span class="k">print</span> <span class="n">b</span><span class="o">.</span><span class="n">recv</span><span class="p">()</span>
+<span class="c"># &#39;hi&#39;</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="non-copying-sends">
+<h2>non-copying sends<a class="headerlink" href="#non-copying-sends" title="Permalink to this headline">¶</a></h2>
+<p>pyzmq supports non-copying sends of objects that provide the buffer interface, which includes
+numpy arrays.</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">A</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="mi">16</span><span class="p">)</span>
+<span class="n">a</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">copy</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>And on the other side, when you do a non-copying recv, you get a Message object, which also
+provides the buffer interface:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">msg</span> <span class="o">=</span> <span class="n">b</span><span class="o">.</span><span class="n">recv</span><span class="p">(</span><span class="n">copy</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+<span class="n">B</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">frombuffer</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">noncopying in code directory</p>
+</div>
+</div>
+<div class="section" id="exercise">
+<h2>Exercise<a class="headerlink" href="#exercise" title="Permalink to this headline">¶</a></h2>
+<p>Can you write a pair of function for sending and receiving numpy arrays without copying?</p>
+<p><a class="reference external" href="_static/soln/serialsocket.py">noncopying solution</a></p>
+</div>
+<div class="section" id="using-pyzmq-for-inter-engine-communication">
+<h2>Using pyzmq for inter-engine communication<a class="headerlink" href="#using-pyzmq-for-inter-engine-communication" title="Permalink to this headline">¶</a></h2>
+<p>Can we design some inter-engine communication with pyzmq?</p>
+<p>What sorts of send/recv patterns might be useful?</p>
+<p>How do we determine who connects to whom?</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="parallel_connections.html" title="Connection Diagrams of The IPython ZMQ Cluster"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="mcdriver.html" title="Solution"
+             >previous</a> |</li>
+        <li><a href="index.html">home</a>|&nbsp;</li>
+        <li><a href="search.html">search</a>|&nbsp;</li>
+       <li><a href="index.html">documentation </a> &raquo;</li>
+ 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2011, The IPython Development Team.
+      Last updated on Jul 12, 2011.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.7.
+    </div>
+  </body>
+</html>

@@ -1,0 +1,162 @@
+.. _parallel_details:
+
+==========================================
+Details of Parallel Computing with IPython
+==========================================
+
+.. note::
+
+    There are still many sections to fill out in this doc
+
+
+Caveats
+=======
+
+First, some caveats about the detailed workings of parallel computing with 0MQ and IPython.
+
+Non-copying sends and numpy arrays
+----------------------------------
+
+When numpy arrays are passed as arguments to apply or via data-movement methods, they are not
+copied. This means that you must be careful if you are sending an array that you intend to work
+on. PyZMQ does allow you to track when a message has been sent so you can know when it is safe
+to edit the buffer, but IPython only allows for this.
+
+It is also important to note that the non-copying receive of a message is *read-only*. That
+means that if you intend to work in-place on an array that you have sent or received, you must
+copy it. This is true for both numpy arrays sent to engines and numpy arrays retrieved as
+results.
+
+The following will fail:
+
+.. sourcecode:: ipython
+
+    In [3]: A = numpy.zeros(2)
+    
+    In [4]: def setter(a):
+      ....: a[0]=1
+      ....: return a
+
+    In [5]: rc[0].apply_sync(setter, A)
+    ---------------------------------------------------------------------------
+    RemoteError                               Traceback (most recent call last)
+    ...
+    RemoteError: RuntimeError(array is not writeable)
+    Traceback (most recent call last):
+      File "/path/to/site-packages/IPython/parallel/streamkernel.py", line 329, in apply_request
+        exec code in working, working
+      File "<string>", line 1, in <module>
+      File "<ipython-input-14-736187483856>", line 2, in setter
+    RuntimeError: array is not writeable
+
+If you do need to edit the array in-place, just remember to copy the array if it's read-only.
+The :attr:`ndarray.flags.writeable` flag will tell you if you can write to an array.
+
+.. sourcecode:: ipython
+
+    In [3]: A = numpy.zeros(2)
+    
+    In [4]: def setter(a):
+      ....:     """only copy read-only arrays"""
+      ....:     if not a.flags.writeable:
+      ....:         a=a.copy()
+      ....:     a[0]=1
+      ....:     return a
+
+    In [5]: rc[0].apply_sync(setter, A)
+    Out[5]: array([ 1.,  0.])
+    
+    # note that results will also be read-only:
+    In [6]: _.flags.writeable
+    Out[6]: False
+
+If you want to safely edit an array in-place after *sending* it, you must use the `track=True`
+flag. IPython always performs non-copying sends of arrays, which return immediately. You must
+instruct IPython track those messages *at send time* in order to know for sure that the send has
+completed. AsyncResults have a :attr:`sent` property, and :meth:`wait_on_send` method for
+checking and waiting for 0MQ to finish with a buffer.
+
+.. sourcecode:: ipython
+
+    In [5]: A = numpy.random.random((1024,1024))
+    
+    In [6]: view.track=True
+    
+    In [7]: ar = view.apply_async(lambda x: 2*x, A)
+    
+    In [8]: ar.sent
+    Out[8]: False
+    
+    In [9]: ar.wait_on_send() # blocks until sent is True
+
+
+What is sendable?
+-----------------
+
+If IPython doesn't know what to do with an object, it will pickle it. There is a short list of
+objects that are not pickled: ``buffers``, ``str/bytes`` objects, and ``numpy``
+arrays. These are handled specially by IPython in order to prevent the copying of data. Sending
+bytes or numpy arrays will result in exactly zero in-memory copies of your data (unless the data
+is very small).
+
+If you have an object that provides a Python buffer interface, then you can always send that
+buffer without copying - and reconstruct the object on the other side in your own code. It is
+possible that the object reconstruction will become extensible, so you can add your own
+non-copying types, but this does not yet exist.
+
+Closures
+********
+
+Just about anything in Python is pickleable. The one notable exception is objects (generally
+functions) with *closures*. Closures can be a complicated topic, but the basic principal is that
+functions that refer to variables in their parent scope have closures.
+
+An example of a function that uses a closure:
+
+.. sourcecode:: python
+
+    def f(a):
+        def inner():
+            # inner will have a closure
+            return a
+        return echo
+    
+    f1 = f(1)
+    f2 = f(2)
+    f1() # returns 1
+    f2() # returns 2
+
+``f1`` and ``f2`` will have closures referring to the scope in which `inner` was defined,
+because they use the variable 'a'. As a result, you would not be able to send ``f1`` or ``f2``
+with IPython. Note that you *would* be able to send `f`. This is only true for interactively
+defined functions (as are often used in decorators), and only when there are variables used
+inside the inner function, that are defined in the outer function. If the names are *not* in the
+outer function, then there will not be a closure, and the generated function will look in
+``globals()`` for the name:
+
+.. sourcecode:: python
+
+    def g(b):
+        # note that `b` is not referenced in inner's scope
+        def inner():
+            # this inner will *not* have a closure
+            return a
+        return echo
+    g1 = g(1)
+    g2 = g(2)
+    g1() # raises NameError on 'a'
+    a=5
+    g2() # returns 5
+
+`g1` and `g2` *will* be sendable with IPython, and will treat the engine's namespace as
+globals().  The :meth:`pull` method is implemented based on this principal.  If we did not
+provide pull, you could implement it yourself with `apply`, by simply returning objects out
+of the global namespace:
+
+.. sourcecode:: ipython
+
+    In [10]: view.apply(lambda : a)
+    
+    # is equivalent to
+    In [11]: view.pull('a')
+

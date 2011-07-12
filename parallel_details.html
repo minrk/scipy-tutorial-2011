@@ -1,0 +1,263 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Details of Parallel Computing with IPython &mdash; IPython Tutorial v0.1 documentation</title>
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="IPython Tutorial v0.1 documentation" href="index.html" />
+    <link rel="prev" title="Starting the IPython controller and engines" href="parallel_process.html" /> 
+  </head>
+  <body>
+
+<div style="background-color: white; text-align: left; padding: 10px 10px 15px 15px">
+<a href="index.html"><img src="_static/logo.png" border="0" alt="IPython Documentation"/></a>
+</div>
+
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="parallel_process.html" title="Starting the IPython controller and engines"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">home</a>|&nbsp;</li>
+        <li><a href="search.html">search</a>|&nbsp;</li>
+       <li><a href="index.html">documentation </a> &raquo;</li>
+ 
+      </ul>
+    </div>
+
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Details of Parallel Computing with IPython</a><ul>
+<li><a class="reference internal" href="#caveats">Caveats</a><ul>
+<li><a class="reference internal" href="#non-copying-sends-and-numpy-arrays">Non-copying sends and numpy arrays</a></li>
+<li><a class="reference internal" href="#what-is-sendable">What is sendable?</a><ul>
+<li><a class="reference internal" href="#closures">Closures</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="parallel_process.html"
+                        title="previous chapter">Starting the IPython controller and engines</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/parallel_details.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" size="18" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="details-of-parallel-computing-with-ipython">
+<span id="parallel-details"></span><h1>Details of Parallel Computing with IPython<a class="headerlink" href="#details-of-parallel-computing-with-ipython" title="Permalink to this headline">¶</a></h1>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">There are still many sections to fill out in this doc</p>
+</div>
+<div class="section" id="caveats">
+<h2>Caveats<a class="headerlink" href="#caveats" title="Permalink to this headline">¶</a></h2>
+<p>First, some caveats about the detailed workings of parallel computing with 0MQ and IPython.</p>
+<div class="section" id="non-copying-sends-and-numpy-arrays">
+<h3>Non-copying sends and numpy arrays<a class="headerlink" href="#non-copying-sends-and-numpy-arrays" title="Permalink to this headline">¶</a></h3>
+<p>When numpy arrays are passed as arguments to apply or via data-movement methods, they are not
+copied. This means that you must be careful if you are sending an array that you intend to work
+on. PyZMQ does allow you to track when a message has been sent so you can know when it is safe
+to edit the buffer, but IPython only allows for this.</p>
+<p>It is also important to note that the non-copying receive of a message is <em>read-only</em>. That
+means that if you intend to work in-place on an array that you have sent or received, you must
+copy it. This is true for both numpy arrays sent to engines and numpy arrays retrieved as
+results.</p>
+<p>The following will fail:</p>
+<div class="highlight-ipython"><div class="highlight"><pre><span class="gp">In [3]: </span><span class="n">A</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+
+<span class="gp">In [4]: </span><span class="k">def</span> <span class="nf">setter</span><span class="p">(</span><span class="n">a</span><span class="p">):</span>
+<span class="go">  ....: a[0]=1</span>
+<span class="go">  ....: return a</span>
+
+<span class="gp">In [5]: </span><span class="n">rc</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">apply_sync</span><span class="p">(</span><span class="n">setter</span><span class="p">,</span> <span class="n">A</span><span class="p">)</span>
+<span class="go">---------------------------------------------------------------------------</span>
+<span class="go">RemoteError                               Traceback (most recent call last)</span>
+<span class="go">...</span>
+<span class="go">RemoteError: RuntimeError(array is not writeable)</span>
+<span class="go">Traceback (most recent call last):</span>
+<span class="go">  File &quot;/path/to/site-packages/IPython/parallel/streamkernel.py&quot;, line 329, in apply_request</span>
+<span class="go">    exec code in working, working</span>
+<span class="go">  File &quot;&lt;string&gt;&quot;, line 1, in &lt;module&gt;</span>
+<span class="go">  File &quot;&lt;ipython-input-14-736187483856&gt;&quot;, line 2, in setter</span>
+<span class="go">RuntimeError: array is not writeable</span>
+</pre></div>
+</div>
+<p>If you do need to edit the array in-place, just remember to copy the array if it&#8217;s read-only.
+The <tt class="xref py py-attr docutils literal"><span class="pre">ndarray.flags.writeable</span></tt> flag will tell you if you can write to an array.</p>
+<div class="highlight-ipython"><div class="highlight"><pre><span class="gp">In [3]: </span><span class="n">A</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+
+<span class="gp">In [4]: </span><span class="k">def</span> <span class="nf">setter</span><span class="p">(</span><span class="n">a</span><span class="p">):</span>
+<span class="go">  ....:     &quot;&quot;&quot;only copy read-only arrays&quot;&quot;&quot;</span>
+<span class="go">  ....:     if not a.flags.writeable:</span>
+<span class="go">  ....:         a=a.copy()</span>
+<span class="go">  ....:     a[0]=1</span>
+<span class="go">  ....:     return a</span>
+
+<span class="gp">In [5]: </span><span class="n">rc</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">apply_sync</span><span class="p">(</span><span class="n">setter</span><span class="p">,</span> <span class="n">A</span><span class="p">)</span>
+<span class="gr">Out[5]: </span><span class="n">array</span><span class="p">([</span> <span class="mf">1.</span><span class="p">,</span>  <span class="mf">0.</span><span class="p">])</span>
+
+<span class="c"># note that results will also be read-only:</span>
+<span class="gp">In [6]: </span><span class="n">_</span><span class="o">.</span><span class="n">flags</span><span class="o">.</span><span class="n">writeable</span>
+<span class="gr">Out[6]: </span><span class="bp">False</span>
+</pre></div>
+</div>
+<p>If you want to safely edit an array in-place after <em>sending</em> it, you must use the <cite>track=True</cite>
+flag. IPython always performs non-copying sends of arrays, which return immediately. You must
+instruct IPython track those messages <em>at send time</em> in order to know for sure that the send has
+completed. AsyncResults have a <tt class="xref py py-attr docutils literal"><span class="pre">sent</span></tt> property, and <tt class="xref py py-meth docutils literal"><span class="pre">wait_on_send()</span></tt> method for
+checking and waiting for 0MQ to finish with a buffer.</p>
+<div class="highlight-ipython"><div class="highlight"><pre><span class="gp">In [5]: </span><span class="n">A</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">random</span><span class="p">((</span><span class="mi">1024</span><span class="p">,</span><span class="mi">1024</span><span class="p">))</span>
+
+<span class="gp">In [6]: </span><span class="n">view</span><span class="o">.</span><span class="n">track</span><span class="o">=</span><span class="bp">True</span>
+
+<span class="gp">In [7]: </span><span class="n">ar</span> <span class="o">=</span> <span class="n">view</span><span class="o">.</span><span class="n">apply_async</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="mi">2</span><span class="o">*</span><span class="n">x</span><span class="p">,</span> <span class="n">A</span><span class="p">)</span>
+
+<span class="gp">In [8]: </span><span class="n">ar</span><span class="o">.</span><span class="n">sent</span>
+<span class="gr">Out[8]: </span><span class="bp">False</span>
+
+<span class="gp">In [9]: </span><span class="n">ar</span><span class="o">.</span><span class="n">wait_on_send</span><span class="p">()</span> <span class="c"># blocks until sent is True</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="what-is-sendable">
+<h3>What is sendable?<a class="headerlink" href="#what-is-sendable" title="Permalink to this headline">¶</a></h3>
+<p>If IPython doesn&#8217;t know what to do with an object, it will pickle it. There is a short list of
+objects that are not pickled: <tt class="docutils literal"><span class="pre">buffers</span></tt>, <tt class="docutils literal"><span class="pre">str/bytes</span></tt> objects, and <tt class="docutils literal"><span class="pre">numpy</span></tt>
+arrays. These are handled specially by IPython in order to prevent the copying of data. Sending
+bytes or numpy arrays will result in exactly zero in-memory copies of your data (unless the data
+is very small).</p>
+<p>If you have an object that provides a Python buffer interface, then you can always send that
+buffer without copying - and reconstruct the object on the other side in your own code. It is
+possible that the object reconstruction will become extensible, so you can add your own
+non-copying types, but this does not yet exist.</p>
+<div class="section" id="closures">
+<h4>Closures<a class="headerlink" href="#closures" title="Permalink to this headline">¶</a></h4>
+<p>Just about anything in Python is pickleable. The one notable exception is objects (generally
+functions) with <em>closures</em>. Closures can be a complicated topic, but the basic principal is that
+functions that refer to variables in their parent scope have closures.</p>
+<p>An example of a function that uses a closure:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">def</span> <span class="nf">f</span><span class="p">(</span><span class="n">a</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">inner</span><span class="p">():</span>
+        <span class="c"># inner will have a closure</span>
+        <span class="k">return</span> <span class="n">a</span>
+    <span class="k">return</span> <span class="n">echo</span>
+
+<span class="n">f1</span> <span class="o">=</span> <span class="n">f</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">f2</span> <span class="o">=</span> <span class="n">f</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+<span class="n">f1</span><span class="p">()</span> <span class="c"># returns 1</span>
+<span class="n">f2</span><span class="p">()</span> <span class="c"># returns 2</span>
+</pre></div>
+</div>
+<p><tt class="docutils literal"><span class="pre">f1</span></tt> and <tt class="docutils literal"><span class="pre">f2</span></tt> will have closures referring to the scope in which <cite>inner</cite> was defined,
+because they use the variable &#8216;a&#8217;. As a result, you would not be able to send <tt class="docutils literal"><span class="pre">f1</span></tt> or <tt class="docutils literal"><span class="pre">f2</span></tt>
+with IPython. Note that you <em>would</em> be able to send <cite>f</cite>. This is only true for interactively
+defined functions (as are often used in decorators), and only when there are variables used
+inside the inner function, that are defined in the outer function. If the names are <em>not</em> in the
+outer function, then there will not be a closure, and the generated function will look in
+<tt class="docutils literal"><span class="pre">globals()</span></tt> for the name:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">def</span> <span class="nf">g</span><span class="p">(</span><span class="n">b</span><span class="p">):</span>
+    <span class="c"># note that `b` is not referenced in inner&#39;s scope</span>
+    <span class="k">def</span> <span class="nf">inner</span><span class="p">():</span>
+        <span class="c"># this inner will *not* have a closure</span>
+        <span class="k">return</span> <span class="n">a</span>
+    <span class="k">return</span> <span class="n">echo</span>
+<span class="n">g1</span> <span class="o">=</span> <span class="n">g</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">g2</span> <span class="o">=</span> <span class="n">g</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+<span class="n">g1</span><span class="p">()</span> <span class="c"># raises NameError on &#39;a&#39;</span>
+<span class="n">a</span><span class="o">=</span><span class="mi">5</span>
+<span class="n">g2</span><span class="p">()</span> <span class="c"># returns 5</span>
+</pre></div>
+</div>
+<p><cite>g1</cite> and <cite>g2</cite> <em>will</em> be sendable with IPython, and will treat the engine&#8217;s namespace as
+globals().  The <tt class="xref py py-meth docutils literal"><span class="pre">pull()</span></tt> method is implemented based on this principal.  If we did not
+provide pull, you could implement it yourself with <cite>apply</cite>, by simply returning objects out
+of the global namespace:</p>
+<div class="highlight-ipython"><div class="highlight"><pre><span class="gp">In [10]: </span><span class="n">view</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="p">:</span> <span class="n">a</span><span class="p">)</span>
+
+<span class="c"># is equivalent to</span>
+<span class="gp">In [11]: </span><span class="n">view</span><span class="o">.</span><span class="n">pull</span><span class="p">(</span><span class="s">&#39;a&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="parallel_process.html" title="Starting the IPython controller and engines"
+             >previous</a> |</li>
+        <li><a href="index.html">home</a>|&nbsp;</li>
+        <li><a href="search.html">search</a>|&nbsp;</li>
+       <li><a href="index.html">documentation </a> &raquo;</li>
+ 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2011, The IPython Development Team.
+      Last updated on Jul 12, 2011.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.7.
+    </div>
+  </body>
+</html>

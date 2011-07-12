@@ -1,0 +1,528 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Basics of remote execution &mdash; IPython Tutorial v0.1 documentation</title>
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="IPython Tutorial v0.1 documentation" href="index.html" />
+    <link rel="next" title="IPython’s Direct interface" href="parallel_multiengine.html" />
+    <link rel="prev" title="Performance" href="performance.html" /> 
+  </head>
+  <body>
+
+<div style="background-color: white; text-align: left; padding: 10px 10px 15px 15px">
+<a href="index.html"><img src="_static/logo.png" border="0" alt="IPython Documentation"/></a>
+</div>
+
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="parallel_multiengine.html" title="IPython’s Direct interface"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="performance.html" title="Performance"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">home</a>|&nbsp;</li>
+        <li><a href="search.html">search</a>|&nbsp;</li>
+       <li><a href="index.html">documentation </a> &raquo;</li>
+ 
+      </ul>
+    </div>
+
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Basics of remote execution</a><ul>
+<li><a class="reference internal" href="#creating-a-client-instance">Creating a <tt class="docutils literal"><span class="pre">Client</span></tt> instance</a></li>
+<li><a class="reference internal" href="#remote-execution-with-apply">Remote Execution with <tt class="docutils literal"><span class="pre">apply()</span></tt></a><ul>
+<li><a class="reference internal" href="#execute-and-run">execute and run</a></li>
+<li><a class="reference internal" href="#remote-function-decorators">Remote function decorators</a></li>
+<li><a class="reference internal" href="#working-with-the-engine-namespace">Working with the engine namespace</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#moving-python-objects-around">Moving Python objects around</a><ul>
+<li><a class="reference internal" href="#basic-push-and-pull">Basic push and pull</a></li>
+<li><a class="reference internal" href="#dictionary-interface">Dictionary interface</a></li>
+<li><a class="reference internal" href="#non-blocking-execution">Non-blocking execution</a></li>
+<li><a class="reference internal" href="#asyncresults-have-metadata">AsyncResults have metadata</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#other-things-to-look-at">Other things to look at</a><ul>
+<li><a class="reference internal" href="#remote-imports">Remote imports</a></li>
+<li><a class="reference internal" href="#remote-exceptions">Remote exceptions</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#moving-on">Moving on</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="performance.html"
+                        title="previous chapter">Performance</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="parallel_multiengine.html"
+                        title="next chapter">IPython&#8217;s Direct interface</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/basic_remote.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" size="18" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="basics-of-remote-execution">
+<span id="basic-remote"></span><h1>Basics of remote execution<a class="headerlink" href="#basics-of-remote-execution" title="Permalink to this headline">¶</a></h1>
+<p>IPython can do complicated multiplexing and load-balancing, but to get a handle
+on the basic principles, we can start with just one engine.</p>
+<div class="section" id="creating-a-client-instance">
+<h2>Creating a <tt class="docutils literal"><span class="pre">Client</span></tt> instance<a class="headerlink" href="#creating-a-client-instance" title="Permalink to this headline">¶</a></h2>
+<p>The first step is to import the IPython <tt class="xref py py-mod docutils literal"><span class="pre">IPython.parallel</span></tt>
+module and then create a <tt class="xref py py-class docutils literal"><span class="pre">Client</span></tt> instance:</p>
+<div class="highlight-ipython"><div class="highlight"><pre><span class="gp">In [1]: </span><span class="kn">from</span> <span class="nn">IPython</span> <span class="kn">import</span> <span class="n">parallel</span> <span class="k">as</span> <span class="n">p</span>
+
+<span class="gp">In [2]: </span><span class="n">rc</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">Client</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>This form assumes that the default connection information (stored in
+<tt class="file docutils literal"><span class="pre">ipcontroller-client.json</span></tt> found in <tt class="file docutils literal"><span class="pre">IPYTHON_DIR/profile_default/security</span></tt>) is
+accurate. If the controller was started on a remote machine, you must copy that connection
+file to the client machine, or enter its contents as arguments to the Client constructor:</p>
+<div class="highlight-ipython"><div class="highlight"><pre><span class="c"># If you have copied the json connector file from the controller:</span>
+<span class="gp">In [2]: </span><span class="n">rc</span> <span class="o">=</span> <span class="n">Client</span><span class="p">(</span><span class="s">&#39;/path/to/ipcontroller-client.json&#39;</span><span class="p">)</span>
+<span class="c"># or to connect with a specific profile you have set up:</span>
+<span class="gp">In [3]: </span><span class="n">rc</span> <span class="o">=</span> <span class="n">Client</span><span class="p">(</span><span class="n">profile</span><span class="o">=</span><span class="s">&#39;mpi&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>To make sure there are engines connected to the controller, users can get a list
+of engine ids:</p>
+<div class="highlight-ipython"><div class="highlight"><pre><span class="gp">In [3]: </span><span class="n">rc</span><span class="o">.</span><span class="n">ids</span>
+<span class="gr">Out[3]: </span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>Here we see that there are four engines ready to do work for us.</p>
+<p>For direct execution, we will make use of a <tt class="xref py py-class docutils literal"><span class="pre">DirectView</span></tt> object, which can be
+constructed via index-access to the client:</p>
+<div class="highlight-ipython"><div class="highlight"><pre><span class="gp">In [4]: </span><span class="n">e0</span> <span class="o">=</span> <span class="n">rc</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="c"># just one engine</span>
+<span class="gp">In [5]: </span><span class="n">e0</span><span class="o">.</span><span class="n">block</span> <span class="o">=</span> <span class="bp">True</span> <span class="c"># let&#39;s be synchronous for now</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="remote-execution-with-apply">
+<h2>Remote Execution with <tt class="xref py py-func docutils literal"><span class="pre">apply()</span></tt><a class="headerlink" href="#remote-execution-with-apply" title="Permalink to this headline">¶</a></h2>
+<p>It&#8217;s all about:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">view</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Once you have a <tt class="xref py py-class docutils literal"><span class="pre">View</span></tt>, then most of what you
+need to do to make calls happen remotely is to simply turn function calls into calls
+to apply.  For instance:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">numpy</span>
+
+<span class="k">def</span> <span class="nf">get_norms</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">levels</span><span class="o">=</span><span class="p">[</span><span class="mi">2</span><span class="p">]):</span>
+    <span class="n">norms</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">level</span> <span class="ow">in</span> <span class="n">levels</span><span class="p">:</span>
+        <span class="n">norms</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">numpy</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">level</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">norms</span>
+
+<span class="n">A</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">random</span><span class="p">(</span><span class="mi">1024</span><span class="p">)</span>
+<span class="n">get_norms</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">levels</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">,</span><span class="n">numpy</span><span class="o">.</span><span class="n">inf</span><span class="p">])</span>
+</pre></div>
+</div>
+<p>To call this remotely, simply replace <tt class="docutils literal"><span class="pre">get_norms(</span></tt> with <tt class="docutils literal"><span class="pre">e0.apply(get_norms,</span></tt>:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">e0</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">get_norms</span><span class="p">,</span> <span class="n">A</span><span class="p">,</span> <span class="n">levels</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">,</span><span class="n">numpy</span><span class="o">.</span><span class="n">inf</span><span class="p">])</span>
+</pre></div>
+</div>
+<p>This replacement is generally true.</p>
+<p>Note that this will probably raise a NameError on numpy.  The simplest way to import
+numpy is to do:</p>
+<div class="highlight-ipython"><div class="highlight"><pre><span class="gp">In [10]: </span><span class="n">e0</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s">&#39;import numpy&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>But if you want to simultaneously import modules locally and globally, you can use
+<tt class="xref py py-meth docutils literal"><span class="pre">view.sync_imports()</span></tt>:</p>
+<div class="highlight-ipython"><div class="highlight"><pre><span class="gp">In [11]: </span><span class="k">with</span> <span class="n">e0</span><span class="o">.</span><span class="n">sync_imports</span><span class="p">():</span>
+<span class="gp">   ....:</span>    <span class="kn">import</span> <span class="nn">numpy</span>
+<span class="gr">Out[11]: </span><span class="n">importing</span> <span class="n">numpy</span> <span class="n">on</span> <span class="n">engine</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Functions don&#8217;t have to be interactively defined, you can use module functions as well:</p>
+<div class="highlight-ipython"><div class="highlight"><pre><span class="gp">In [12]: </span><span class="n">e0</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">numpy</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">,</span> <span class="n">A</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+<span class="gr">Out[12]: </span><span class="mf">512.128964</span>
+</pre></div>
+</div>
+<div class="section" id="execute-and-run">
+<h3>execute and run<a class="headerlink" href="#execute-and-run" title="Permalink to this headline">¶</a></h3>
+<p>You can also run files or strings with <tt class="xref py py-meth docutils literal"><span class="pre">run()</span></tt> and <tt class="xref py py-meth docutils literal"><span class="pre">execute()</span></tt> respectively.</p>
+<p>For instance, I have a script <tt class="file docutils literal"><span class="pre">myscript.py</span></tt> that defines a function <tt class="xref py py-func docutils literal"><span class="pre">mysquare()</span></tt>:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">math</span>
+<span class="kn">import</span> <span class="nn">numpy</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+
+<span class="n">a</span><span class="o">=</span><span class="mi">5</span>
+
+<span class="k">def</span> <span class="nf">mysquare</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">x</span><span class="o">*</span><span class="n">x</span>
+</pre></div>
+</div>
+<p>I can run that remotely, just like I can locally with <tt class="docutils literal"><span class="pre">%run</span></tt>, and then I will have
+<tt class="docutils literal"><span class="pre">mysquare</span></tt>, and any imports and globals from the script in the engine&#8217;s namespace:</p>
+<div class="highlight-ipython"><div class="highlight"><pre><span class="gp">In [12]: </span><span class="n">e0</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="s">&#39;myscript.py&#39;</span><span class="p">)</span>
+
+<span class="gp">In [13]: </span><span class="n">e0</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s">&#39;b=mysquare(a)&#39;</span><span class="p">)</span>
+
+<span class="gp">In [14]: </span><span class="n">e0</span><span class="p">[</span><span class="s">&#39;a&#39;</span><span class="p">]</span>
+<span class="gr">Out[14]: </span><span class="mi">5</span>
+
+<span class="gp">In [14]: </span><span class="n">e0</span><span class="p">[</span><span class="s">&#39;b&#39;</span><span class="p">]</span>
+<span class="gr">Out[14]: </span><span class="mi">25</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="remote-function-decorators">
+<h3>Remote function decorators<a class="headerlink" href="#remote-function-decorators" title="Permalink to this headline">¶</a></h3>
+<p>Remote functions are just like normal functions, but when they are called,
+they execute on one or more engines, rather than locally. IPython provides
+a decorator that lets a function always be called remotely:</p>
+<div class="highlight-ipython"><div class="highlight"><pre><span class="gp">In [10]: </span><span class="nd">@e0.remote</span><span class="p">(</span><span class="n">block</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+<span class="gp">   ....:</span> <span class="k">def</span> <span class="nf">getpid</span><span class="p">():</span>
+<span class="gp">   ....:</span>     <span class="kn">import</span> <span class="nn">os</span>
+<span class="gp">   ....:</span>     <span class="k">return</span> <span class="n">os</span><span class="o">.</span><span class="n">getpid</span><span class="p">()</span>
+<span class="gp">   ....:</span>
+
+<span class="gp">In [11]: </span><span class="n">getpid</span><span class="p">()</span>
+<span class="gr">Out[11]: </span><span class="mi">12345</span>
+
+<span class="gp">In [12]: </span><span class="n">os</span><span class="o">.</span><span class="n">getpid</span><span class="p">()</span>
+<span class="gr">Out[12]: </span><span class="mi">12386</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="working-with-the-engine-namespace">
+<h3>Working with the engine namespace<a class="headerlink" href="#working-with-the-engine-namespace" title="Permalink to this headline">¶</a></h3>
+<p>The namespace on the engine is accessible to your functions as <tt class="docutils literal"><span class="pre">globals</span></tt>.  So if
+you want to work with values that exist, you can use global variables.</p>
+<div class="highlight-ipython"><div class="highlight"><pre><span class="gp">In [20]: </span><span class="k">def</span> <span class="nf">inc_a</span><span class="p">(</span><span class="n">increment</span><span class="p">):</span>
+<span class="gp">   ....:</span>    <span class="k">global</span> <span class="n">a</span>
+<span class="gp">   ....:</span>    <span class="n">a</span> <span class="o">=</span> <span class="n">a</span><span class="o">+</span><span class="n">increment</span>
+</pre></div>
+</div>
+<p>And just like the rest of Python, you don&#8217;t have to specify global variables if you aren&#8217;t
+assigning to them:</p>
+<div class="highlight-python"><pre>In [20]: def mul_by_a(b):
+   ....:    return a*b
+
+In [21]: e0['a'] = 10
+
+In [22]: e0.apply(mul_by_a, 2)
+Out[22]: 20</pre>
+</div>
+</div>
+</div>
+<div class="section" id="moving-python-objects-around">
+<h2>Moving Python objects around<a class="headerlink" href="#moving-python-objects-around" title="Permalink to this headline">¶</a></h2>
+<p>In addition to calling functions and executing code on engines, you can
+transfer Python objects to and from your IPython session and the engines. In
+IPython, these operations are called <tt class="xref py py-meth docutils literal"><span class="pre">push()</span></tt> (sending an object to the
+engines) and <tt class="xref py py-meth docutils literal"><span class="pre">pull()</span></tt> (getting an object from the engines).</p>
+<div class="section" id="basic-push-and-pull">
+<h3>Basic push and pull<a class="headerlink" href="#basic-push-and-pull" title="Permalink to this headline">¶</a></h3>
+<p>Here are some examples of how you use <tt class="xref py py-meth docutils literal"><span class="pre">push()</span></tt> and <tt class="xref py py-meth docutils literal"><span class="pre">pull()</span></tt>:</p>
+<div class="highlight-ipython"><div class="highlight"><pre><span class="gp">In [38]: </span><span class="n">e0</span><span class="o">.</span><span class="n">push</span><span class="p">(</span><span class="nb">dict</span><span class="p">(</span><span class="n">a</span><span class="o">=</span><span class="mf">1.03234</span><span class="p">,</span><span class="n">b</span><span class="o">=</span><span class="mi">3453</span><span class="p">))</span>
+
+<span class="gp">In [39]: </span><span class="n">e0</span><span class="o">.</span><span class="n">pull</span><span class="p">(</span><span class="s">&#39;a&#39;</span><span class="p">)</span>
+<span class="gr">Out[39]: </span><span class="mf">1.03234</span>
+
+<span class="gp">In [40]: </span><span class="n">e0</span><span class="o">.</span><span class="n">pull</span><span class="p">(</span><span class="s">&#39;b&#39;</span><span class="p">)</span>
+<span class="gr">Out[40]: </span><span class="mi">3453</span>
+
+<span class="gp">In [41]: </span><span class="n">e0</span><span class="o">.</span><span class="n">pull</span><span class="p">((</span><span class="s">&#39;a&#39;</span><span class="p">,</span><span class="s">&#39;b&#39;</span><span class="p">))</span>
+<span class="gr">Out[41]: </span><span class="p">[</span><span class="mf">1.03234</span><span class="p">,</span> <span class="mi">3453</span><span class="p">]</span>
+
+<span class="gp">In [43]: </span><span class="n">e0</span><span class="o">.</span><span class="n">push</span><span class="p">(</span><span class="nb">dict</span><span class="p">(</span><span class="n">c</span><span class="o">=</span><span class="s">&#39;speed&#39;</span><span class="p">))</span>
+</pre></div>
+</div>
+<p>In non-blocking mode <tt class="xref py py-meth docutils literal"><span class="pre">push()</span></tt> and <tt class="xref py py-meth docutils literal"><span class="pre">pull()</span></tt> also return
+<tt class="xref py py-class docutils literal"><span class="pre">AsyncResult</span></tt> objects:</p>
+<div class="highlight-ipython"><div class="highlight"><pre><span class="gp">In [48]: </span><span class="n">ar</span> <span class="o">=</span> <span class="n">e0</span><span class="o">.</span><span class="n">pull</span><span class="p">(</span><span class="s">&#39;a&#39;</span><span class="p">,</span> <span class="n">block</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+
+<span class="gp">In [49]: </span><span class="n">ar</span><span class="o">.</span><span class="n">get</span><span class="p">()</span>
+<span class="gr">Out[49]: </span><span class="mf">1.03234</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="dictionary-interface">
+<h3>Dictionary interface<a class="headerlink" href="#dictionary-interface" title="Permalink to this headline">¶</a></h3>
+<p>Since a Python namespace is just a <tt class="xref py py-class docutils literal"><span class="pre">dict</span></tt>, <tt class="xref py py-class docutils literal"><span class="pre">DirectView</span></tt> objects provide
+dictionary-style access by key and methods such as <tt class="xref py py-meth docutils literal"><span class="pre">get()</span></tt> and
+<tt class="xref py py-meth docutils literal"><span class="pre">update()</span></tt> for convenience. This make the remote namespaces of the engines
+appear as a local dictionary. Underneath, these methods call <tt class="xref py py-meth docutils literal"><span class="pre">apply()</span></tt>:</p>
+<div class="highlight-ipython"><div class="highlight"><pre><span class="gp">In [51]: </span><span class="n">e0</span><span class="p">[</span><span class="s">&#39;a&#39;</span><span class="p">]</span><span class="o">=</span><span class="p">[</span><span class="s">&#39;foo&#39;</span><span class="p">,</span><span class="s">&#39;bar&#39;</span><span class="p">]</span>
+
+<span class="gp">In [52]: </span><span class="n">e0</span><span class="p">[</span><span class="s">&#39;a&#39;</span><span class="p">]</span>
+<span class="gr">Out[52]: </span><span class="p">[</span><span class="s">&#39;foo&#39;</span><span class="p">,</span> <span class="s">&#39;bar&#39;</span><span class="p">]</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="non-blocking-execution">
+<h3>Non-blocking execution<a class="headerlink" href="#non-blocking-execution" title="Permalink to this headline">¶</a></h3>
+<p>In non-blocking mode, <tt class="xref py py-meth docutils literal"><span class="pre">apply()</span></tt> submits the command to be executed and
+then returns a <tt class="xref py py-class docutils literal"><span class="pre">AsyncResult</span></tt> object immediately. The
+<tt class="xref py py-class docutils literal"><span class="pre">AsyncResult</span></tt> object gives you a way of getting a result at a later
+time through its <tt class="xref py py-meth docutils literal"><span class="pre">get()</span></tt> method.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">The <tt class="xref py py-class docutils literal"><span class="pre">AsyncResult</span></tt> object provides a superset of the interface in
+<tt class="xref py py-class docutils literal"><span class="pre">multiprocessing.pool.AsyncResult</span></tt>.  See the
+<a class="reference external" href="http://docs.python.org/library/multiprocessing#multiprocessing.pool.AsyncResult">official Python documentation</a>
+for more.</p>
+</div>
+<p>This allows you to quickly submit long running commands without blocking your
+local Python/IPython session:</p>
+<div class="highlight-ipython"><div class="highlight"><pre><span class="c"># define our function</span>
+<span class="gp">In [6]: </span><span class="k">def</span> <span class="nf">wait</span><span class="p">(</span><span class="n">t</span><span class="p">):</span>
+<span class="go">  ....:     import time</span>
+<span class="go">  ....:     tic = time.time()</span>
+<span class="go">  ....:     time.sleep(t)</span>
+<span class="go">  ....:     return time.time()-tic</span>
+
+<span class="c"># In non-blocking mode</span>
+<span class="gp">In [7]: </span><span class="n">ar</span> <span class="o">=</span> <span class="n">e0</span><span class="o">.</span><span class="n">apply_async</span><span class="p">(</span><span class="n">wait</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+
+<span class="c"># Now block for the result</span>
+<span class="gp">In [8]: </span><span class="n">ar</span><span class="o">.</span><span class="n">get</span><span class="p">()</span>
+<span class="gr">Out[8]: </span><span class="mf">2.0006198883056641</span>
+
+<span class="c"># Again in non-blocking mode</span>
+<span class="gp">In [9]: </span><span class="n">ar</span> <span class="o">=</span> <span class="n">e0</span><span class="o">.</span><span class="n">apply_async</span><span class="p">(</span><span class="n">wait</span><span class="p">,</span> <span class="mi">10</span><span class="p">)</span>
+
+<span class="c"># Poll to see if the result is ready</span>
+<span class="gp">In [10]: </span><span class="n">ar</span><span class="o">.</span><span class="n">ready</span><span class="p">()</span>
+<span class="gr">Out[10]: </span><span class="bp">False</span>
+
+<span class="c"># ask for the result, but wait a maximum of 1 second:</span>
+<span class="gp">In [45]: </span><span class="n">ar</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+<span class="go">---------------------------------------------------------------------------</span>
+<span class="go">TimeoutError                              Traceback (most recent call last)</span>
+<span class="go">/home/you/&lt;ipython-input-45-7cd858bbb8e0&gt; in &lt;module&gt;()</span>
+<span class="go">----&gt; 1 ar.get(1)</span>
+
+<span class="go">/path/to/site-packages/IPython/parallel/asyncresult.pyc in get(self, timeout)</span>
+<span class="go">     62                 raise self._exception</span>
+<span class="go">     63         else:</span>
+<span class="go">---&gt; 64             raise error.TimeoutError(&quot;Result not ready.&quot;)</span>
+<span class="go">     65</span>
+<span class="go">     66     def ready(self):</span>
+
+<span class="go">TimeoutError: Result not ready.</span>
+</pre></div>
+</div>
+<p>For convenience, you can set <tt class="docutils literal"><span class="pre">block</span></tt> for a single call with the extra sync/async methods:</p>
+<div class="highlight-ipython"><div class="highlight"><pre><span class="gp">In [5]: </span><span class="n">view</span><span class="o">.</span><span class="n">apply</span><span class="o">&lt;</span><span class="n">tab</span><span class="o">&gt;</span>
+<span class="go">view.apply  view.apply_async  view.apply_sync</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="asyncresults-have-metadata">
+<h3>AsyncResults have metadata<a class="headerlink" href="#asyncresults-have-metadata" title="Permalink to this headline">¶</a></h3>
+<p>AsyncResult objects have metadata about the execution.</p>
+<div class="highlight-ipython"><div class="highlight"><pre><span class="c"># In non-blocking mode</span>
+<span class="gp">In [7]: </span><span class="n">ar</span> <span class="o">=</span> <span class="n">e0</span><span class="o">.</span><span class="n">apply_async</span><span class="p">(</span><span class="n">wait</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+<span class="gp">In [8]: </span><span class="n">ar</span><span class="o">.</span><span class="n">get</span><span class="p">()</span>
+
+<span class="gp">In [9]: </span><span class="n">ar</span><span class="o">.</span><span class="n">metadata</span>
+<span class="go">Out[9]:</span>
+<span class="go">{&#39;after&#39;: [],</span>
+<span class="go"> &#39;completed&#39;: datetime.datetime(2011, 7, 12, 0, 41, 3, 418436),</span>
+<span class="go"> &#39;engine_id&#39;: 0,</span>
+<span class="go"> &#39;engine_uuid&#39;: u&#39;137c498a-e523-4e8e-a2eb-b4946ce05c92&#39;,</span>
+<span class="go"> &#39;follow&#39;: [],</span>
+<span class="go"> &#39;msg_id&#39;: u&#39;517841ed-3d2b-49ef-9d69-91b7362d2c1c&#39;,</span>
+<span class="go"> &#39;received&#39;: datetime.datetime(2011, 7, 12, 0, 41, 3, 424675),</span>
+<span class="go"> &#39;started&#39;: datetime.datetime(2011, 7, 12, 0, 41, 3, 417561),</span>
+<span class="go"> &#39;status&#39;: u&#39;ok&#39;,</span>
+<span class="go"> &#39;stderr&#39;: &#39;&#39;,</span>
+<span class="go"> &#39;stdout&#39;: &#39;&#39;,</span>
+<span class="go"> &#39;submitted&#39;: datetime.datetime(2011, 7, 12, 0, 41, 3, 407432)</span>
+<span class="go">}</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="other-things-to-look-at">
+<h2>Other things to look at<a class="headerlink" href="#other-things-to-look-at" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="remote-imports">
+<h3>Remote imports<a class="headerlink" href="#remote-imports" title="Permalink to this headline">¶</a></h3>
+<p>Sometimes you will want to import packages both in your interactive session
+and on your remote engines.  This can be done with the <tt class="xref py py-class docutils literal"><span class="pre">ContextManager</span></tt>
+created by a DirectView&#8217;s <tt class="xref py py-meth docutils literal"><span class="pre">sync_imports()</span></tt> method:</p>
+<div class="highlight-ipython"><div class="highlight"><pre><span class="gp">In [69]: </span><span class="k">with</span> <span class="n">e0</span><span class="o">.</span><span class="n">sync_imports</span><span class="p">():</span>
+<span class="gp">   ....:</span>     <span class="kn">import</span> <span class="nn">numpy</span>
+<span class="go">importing numpy on engine(s)</span>
+</pre></div>
+</div>
+<p>Any imports made inside the block will also be performed on the view&#8217;s engines.
+sync_imports also takes a <cite>local</cite> boolean flag that defaults to True, which specifies
+whether the local imports should also be performed.  However, support for <cite>local=False</cite>
+has not been implemented, so only packages that can be imported locally will work
+this way.</p>
+<p>You can also specify imports via the <tt class="docutils literal"><span class="pre">&#64;require</span></tt> decorator.  This is a decorator
+designed for use in Dependencies, but can be used to handle remote imports as well.
+Modules or module names passed to <tt class="docutils literal"><span class="pre">&#64;require</span></tt> will be imported before the decorated
+function is called.  If they cannot be imported, the decorated function will never
+execution, and will fail with an UnmetDependencyError.</p>
+<div class="highlight-ipython"><div class="highlight"><pre><span class="gp">In [69]: </span><span class="kn">from</span> <span class="nn">IPython.parallel</span> <span class="kn">import</span> <span class="n">require</span>
+
+<span class="gp">In [70]: </span><span class="nd">@requre</span><span class="p">(</span><span class="s">&#39;re&#39;</span><span class="p">):</span>
+<span class="gp">   ....:</span> <span class="k">def</span> <span class="nf">findall</span><span class="p">(</span><span class="n">pat</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+<span class="gp">   ....:</span>     <span class="c"># re is guaranteed to be available</span>
+<span class="gp">   ....:</span>     <span class="k">return</span> <span class="n">re</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="n">pat</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span>
+
+<span class="c"># you can also pass modules themselves, that you already have locally:</span>
+<span class="gp">In [71]: </span><span class="nd">@requre</span><span class="p">(</span><span class="n">time</span><span class="p">):</span>
+<span class="gp">   ....:</span> <span class="k">def</span> <span class="nf">wait</span><span class="p">(</span><span class="n">t</span><span class="p">):</span>
+<span class="gp">   ....:</span>     <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="n">t</span><span class="p">)</span>
+<span class="gp">   ....:</span>     <span class="k">return</span> <span class="n">t</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="remote-exceptions">
+<span id="id1"></span><h3>Remote exceptions<a class="headerlink" href="#remote-exceptions" title="Permalink to this headline">¶</a></h3>
+<p>When you raise an error remotely, a RemoteError gets raised locally when
+you ask for the result.  This happens right away, during blocking execution:</p>
+<div class="highlight-ipython"><div class="highlight"><pre><span class="gp">In [58]: </span><span class="n">e0</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s">&#39;1/0&#39;</span><span class="p">,</span> <span class="n">block</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+<span class="go">---------------------------------------------------------------------------</span>
+<span class="go">RemoteError                               Traceback (most recent call last)</span>
+<span class="go">/Users/you/&lt;ipython-input-58-979e7b2709c5&gt; in &lt;module&gt;()</span>
+<span class="go">----&gt; 1 e0.execute(&#39;1/0&#39;, block=True)</span>
+<span class="go">...</span>
+<span class="go">/path/to/python/site-packages/IPython/parallel/client/asyncresult.pyc in get(self, timeout)</span>
+<span class="go">    101                 return self._result</span>
+<span class="go">    102             else:</span>
+<span class="go">--&gt; 103                 raise self._exception</span>
+<span class="go">    104         else:</span>
+<span class="go">    105             raise error.TimeoutError(&quot;Result not ready.&quot;)</span>
+
+<span class="go">RemoteError: ZeroDivisionError(integer division or modulo by zero)</span>
+<span class="go">Traceback (most recent call last):</span>
+<span class="go">  File &quot;/path/to/python/site-packages/IPython/parallel/engine/streamkernel.py&quot;, line 337, in apply_request</span>
+<span class="go">    exec code in working,working</span>
+<span class="go">  File &quot;&lt;string&gt;&quot;, line 1, in &lt;module&gt;</span>
+<span class="go">  File &quot;/path/to/python/site-packages/IPython/parallel/util.py&quot;, line 360, in _execute</span>
+<span class="go">    exec code in globals()</span>
+<span class="go">  File &quot;&lt;string&gt;&quot;, line 1, in &lt;module&gt;</span>
+<span class="go">ZeroDivisionError: integer division or modulo by zero</span>
+</pre></div>
+</div>
+<p>Notice how the error message printed when <tt class="xref py py-exc docutils literal"><span class="pre">RemoteError</span></tt> is raised has
+the traceback for your remote exception.</p>
+<p>All of this same error handling magic even works in non-blocking mode:</p>
+<div class="highlight-ipython"><div class="highlight"><pre><span class="gp">In [83]: </span><span class="n">e0</span><span class="o">.</span><span class="n">block</span><span class="o">=</span><span class="bp">False</span>
+
+<span class="gp">In [84]: </span><span class="n">ar</span> <span class="o">=</span> <span class="n">e0</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s">&#39;1/0&#39;</span><span class="p">)</span>
+
+<span class="gp">In [85]: </span><span class="n">ar</span><span class="o">.</span><span class="n">get</span><span class="p">()</span>
+<span class="go">---------------------------------------------------------------------------</span>
+<span class="go">CompositeError                            Traceback (most recent call last)</span>
+<span class="go">/home/user/&lt;ipython-input-21-8531eb3d26fb&gt; in &lt;module&gt;()</span>
+<span class="go">----&gt; 1 ar.get()</span>
+
+<span class="go">/path/to/site-packages/IPython/parallel/client/asyncresult.pyc in get(self, timeout)</span>
+<span class="go">    101                 return self._result</span>
+<span class="go">    102             else:</span>
+<span class="go">--&gt; 103                 raise self._exception</span>
+<span class="go">    104         else:</span>
+<span class="go">    105             raise error.TimeoutError(&quot;Result not ready.&quot;)</span>
+
+<span class="go">RemoteError: ZeroDivisionError(integer division or modulo by zero)</span>
+<span class="go">Traceback (most recent call last):</span>
+<span class="go">  File &quot;/path/to/python/site-packages/IPython/parallel/engine/streamkernel.py&quot;, line 337, in apply_request</span>
+<span class="go">    exec code in working,working</span>
+<span class="go">  File &quot;&lt;string&gt;&quot;, line 1, in &lt;module&gt;</span>
+<span class="go">  File &quot;/path/to/python/site-packages/IPython/parallel/util.py&quot;, line 360, in _execute</span>
+<span class="go">    exec code in globals()</span>
+<span class="go">  File &quot;&lt;string&gt;&quot;, line 1, in &lt;module&gt;</span>
+<span class="go">ZeroDivisionError: integer division or modulo by zero</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="moving-on">
+<h2>Moving on<a class="headerlink" href="#moving-on" title="Permalink to this headline">¶</a></h2>
+<p>Now that we are familiar with the basic principles of remote execution with IPython,
+let&#8217;s try some actual parallel work.</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="parallel_multiengine.html" title="IPython’s Direct interface"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="performance.html" title="Performance"
+             >previous</a> |</li>
+        <li><a href="index.html">home</a>|&nbsp;</li>
+        <li><a href="search.html">search</a>|&nbsp;</li>
+       <li><a href="index.html">documentation </a> &raquo;</li>
+ 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2011, The IPython Development Team.
+      Last updated on Jul 12, 2011.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.7.
+    </div>
+  </body>
+</html>

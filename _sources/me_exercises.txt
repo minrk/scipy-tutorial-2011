@@ -1,0 +1,42 @@
+
+======================
+Multiplexing Exercises
+======================
+
+
+Monte Carlo π
+=============
+
+A simple toy problem to get a handle on multiple engines is a Monte Carlo approximation
+of π.
+
+Let's say we have a dartboard with a round target inscribed on a square board.  If you
+threw darts randomly, and they land evenly distributed on the square board, how many 
+darts would you expect to hit the target?
+
+
+.. image:: figs/darts.png
+
+
+.. literalinclude:: _static/code/mcpi.py
+    :language: python
+
+It takes a lot of samples to get a good approximation.  Can you write a function that
+will use your engines to break up the work?
+
+`mcpi solution <_static/soln/mcpi_soln.py>`_
+
+Remote Iterators
+================
+
+Can you create an object that iterates through a remote iterable?
+
+.. sourcecode:: ipython
+
+    In [10]: dview['a'] = range(5)
+    
+    In [11]: ra = remote_iterator(dview, 'a')
+
+`remote iter solution <_static/soln/remoteiter.py>`_
+
+

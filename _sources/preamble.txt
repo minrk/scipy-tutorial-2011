@@ -1,0 +1,34 @@
+
+=============================
+Installation and dependencies
+=============================
+
+
+You will need IPython 0.11, and pyzmq >= 2.1.4. If you have EPD 7.1, you have both of these, but
+IPython is 0.11.rc1. rc1 is mostly fine, with a few little bugs, but the main difference
+you will notice is that in rc1, specifying values on the command-line does not expect
+a leading ``--``.
+
+In rc1::
+
+    ipython profile=foo --pylab
+
+It turns out, people hate this, so in dev and the future, this is::
+
+    ipython --profile=foo --pylab
+
+This pattern is true for all cl *assignments* (non-assignment flags did not change).
+
+IPython from master::
+
+    git clone git://github.com/ipython/ipython.git
+
+or without git::
+
+    pip install https://github.com/ipython/ipython/tarball/master
+
+pyzmq-2.1.7 has eggs for various current OSX and Windows Pythons. If we don't have an egg
+for you, you can build & install libzmq from http://www.zeromq.org/area:download.
+
+After you have libzmq (and run ldconfig to update its cache), pyzmq is
+pip/easy_installable.
