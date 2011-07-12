@@ -59,7 +59,7 @@ hosts ``host1``-``hostn``. The following steps are then required:
 
 1. Start the controller on ``host0`` by running :command:`ipcontroller` on
    ``host0``.  The controller must be instructed to listen on an interface visible
-   to the engine machines, via the ``ip`` command-line argument or ``HubFactory.ip``
+   to the engine machines, via the ``--ip`` command-line argument or ``HubFactory.ip``
    in :file:`ipcontroller_config.py`.
 2. Move the JSON file (:file:`ipcontroller-engine.json`) created by the 
    controller from ``host0`` to hosts ``host1``-``hostn``.
@@ -94,14 +94,6 @@ controller and engines in the following situations:
    remote nodes using :command:`ssh`.
 5. When engines are started using the Windows HPC Server batch system.
 
-.. note::
-
-    Currently :command:`ipcluster` requires that the
-    :file:`~/.ipython/profile_<name>/security` directory live on a shared filesystem that is
-    seen by both the controller and engines. If you don't have a shared file
-    system you will need to use :command:`ipcontroller` and
-    :command:`ipengine` directly.
-
 Under the hood, :command:`ipcluster` just uses :command:`ipcontroller`
 and :command:`ipengine` to perform the steps described above.
 
@@ -126,7 +118,7 @@ Cluster configurations are stored as `profiles`.  You can create a new profile w
 This will create the directory :file:`IPYTHONDIR/profile_myprofile`, and populate it
 with the default configuration files for the three IPython cluster commands. Once
 you edit those files, you can continue to call ipcluster/ipcontroller/ipengine
-with no arguments beyond ``profile=myprofile``, and any configuration will be maintained.
+with no arguments beyond ``--profile=myprofile``, and any configuration will be maintained.
 
 There is no limit to the number of profiles you can have, so you can maintain a profile for each
 of your common use cases. The default profile will be used whenever the
@@ -443,7 +435,7 @@ controller and engines from IPython.
     
     The order of the above operations may be important.  You *must*
     start the controller before the engines, unless you are reusing connection
-    information (via ``--reuse``), in which case ordering is not important.
+    information (via ``--reuse-files``), in which case ordering is not important.
 
 .. note::
 

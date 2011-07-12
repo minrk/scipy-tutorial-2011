@@ -107,8 +107,12 @@ a leading <tt class="docutils literal"><span class="pre">--</span></tt>.</p>
 </div>
 <p>pyzmq-2.1.7 has eggs for various current OSX and Windows Pythons. If we don&#8217;t have an egg
 for you, you can build &amp; install libzmq from <a class="reference external" href="http://www.zeromq.org/area:download">http://www.zeromq.org/area:download</a>.</p>
-<p>After you have libzmq (and run ldconfig to update its cache), pyzmq is
+<p>Macs can get a 32+64b intel libzmq via <cite>homebrew &lt;https://github.com/mxcl/homebrew</cite> with:</p>
+<div class="highlight-python"><pre>brew install zeromq --universal</pre>
+</div>
+<p>After you have libzmq (and run ldconfig to update its cache), pyzmq <em>should</em> be
 pip/easy_installable.</p>
+<p>Get the <a class="reference external" href="https://github.com/minrk/scipy-tutorial-2011">tutorial code</a></p>
 </div>
 
 

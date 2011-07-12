@@ -4,6 +4,8 @@
 Using IPython for parallel computing
 ====================================
 
+http://minrk.github.com/scipy-tutorial-2011
+
 * Brian Granger, *Cal Poly Physics*
 * Fernando Perez, *UC Berkeley Neuroscience*
 * **Min Ragan-Kelley**, *UC Berkeley Applied Science & Technology*
@@ -15,6 +17,7 @@ Using IPython for parallel computing
    preamble.txt
    parallel_intro.txt
    performance.txt
+   parallel_process.txt
    basic_remote.txt
    parallel_multiengine.txt
    me_exercises.txt
@@ -28,7 +31,6 @@ Using IPython for parallel computing
    parallel_db.txt
    parallel_transition.txt
    parallel_security.txt
-   parallel_process.txt
    parallel_details.txt
 
 

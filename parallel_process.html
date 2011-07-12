@@ -23,8 +23,8 @@
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
     <link rel="top" title="IPython Tutorial v0.1 documentation" href="index.html" />
-    <link rel="next" title="Details of Parallel Computing with IPython" href="parallel_details.html" />
-    <link rel="prev" title="Security details of IPython" href="parallel_security.html" /> 
+    <link rel="next" title="Basics of remote execution" href="basic_remote.html" />
+    <link rel="prev" title="Performance" href="performance.html" /> 
   </head>
   <body>
 
@@ -39,10 +39,10 @@
           <a href="genindex.html" title="General Index"
              accesskey="I">index</a></li>
         <li class="right" >
-          <a href="parallel_details.html" title="Details of Parallel Computing with IPython"
+          <a href="basic_remote.html" title="Basics of remote execution"
              accesskey="N">next</a> |</li>
         <li class="right" >
-          <a href="parallel_security.html" title="Security details of IPython"
+          <a href="performance.html" title="Performance"
              accesskey="P">previous</a> |</li>
         <li><a href="index.html">home</a>|&nbsp;</li>
         <li><a href="search.html">search</a>|&nbsp;</li>
@@ -83,11 +83,11 @@
 </ul>
 
   <h4>Previous topic</h4>
-  <p class="topless"><a href="parallel_security.html"
-                        title="previous chapter">Security details of IPython</a></p>
+  <p class="topless"><a href="performance.html"
+                        title="previous chapter">Performance</a></p>
   <h4>Next topic</h4>
-  <p class="topless"><a href="parallel_details.html"
-                        title="next chapter">Details of Parallel Computing with IPython</a></p>
+  <p class="topless"><a href="basic_remote.html"
+                        title="next chapter">Basics of remote execution</a></p>
   <h3>This Page</h3>
   <ul class="this-page-menu">
     <li><a href="_sources/parallel_process.txt"
@@ -163,7 +163,7 @@ hosts <tt class="docutils literal"><span class="pre">host1</span></tt>-<tt class
 <ol class="arabic simple">
 <li>Start the controller on <tt class="docutils literal"><span class="pre">host0</span></tt> by running <strong class="command">ipcontroller</strong> on
 <tt class="docutils literal"><span class="pre">host0</span></tt>.  The controller must be instructed to listen on an interface visible
-to the engine machines, via the <tt class="docutils literal"><span class="pre">ip</span></tt> command-line argument or <tt class="docutils literal"><span class="pre">HubFactory.ip</span></tt>
+to the engine machines, via the <tt class="docutils literal"><span class="pre">--ip</span></tt> command-line argument or <tt class="docutils literal"><span class="pre">HubFactory.ip</span></tt>
 in <tt class="file docutils literal"><span class="pre">ipcontroller_config.py</span></tt>.</li>
 <li>Move the JSON file (<tt class="file docutils literal"><span class="pre">ipcontroller-engine.json</span></tt>) created by the
 controller from <tt class="docutils literal"><span class="pre">host0</span></tt> to hosts <tt class="docutils literal"><span class="pre">host1</span></tt>-<tt class="docutils literal"><span class="pre">hostn</span></tt>.</li>
@@ -196,14 +196,6 @@ with most MPI <a class="reference internal" href="parallel_mpi.html#mpi">[MPI]</
 remote nodes using <strong class="command">ssh</strong>.</li>
 <li>When engines are started using the Windows HPC Server batch system.</li>
 </ol>
-<div class="admonition note">
-<p class="first admonition-title">Note</p>
-<p class="last">Currently <strong class="command">ipcluster</strong> requires that the
-<tt class="file docutils literal"><span class="pre">~/.ipython/profile_&lt;name&gt;/security</span></tt> directory live on a shared filesystem that is
-seen by both the controller and engines. If you don&#8217;t have a shared file
-system you will need to use <strong class="command">ipcontroller</strong> and
-<strong class="command">ipengine</strong> directly.</p>
-</div>
 <p>Under the hood, <strong class="command">ipcluster</strong> just uses <strong class="command">ipcontroller</strong>
 and <strong class="command">ipengine</strong> to perform the steps described above.</p>
 <p>The simplest way to use ipcluster requires no configuration, and will
@@ -223,7 +215,7 @@ to start one controller and 4 engines on localhost, just do:</p>
 <p>This will create the directory <tt class="file docutils literal"><span class="pre">IPYTHONDIR/profile_myprofile</span></tt>, and populate it
 with the default configuration files for the three IPython cluster commands. Once
 you edit those files, you can continue to call ipcluster/ipcontroller/ipengine
-with no arguments beyond <tt class="docutils literal"><span class="pre">profile=myprofile</span></tt>, and any configuration will be maintained.</p>
+with no arguments beyond <tt class="docutils literal"><span class="pre">--profile=myprofile</span></tt>, and any configuration will be maintained.</p>
 <p>There is no limit to the number of profiles you can have, so you can maintain a profile for each
 of your common use cases. The default profile will be used whenever the
 profile argument is not specified, so edit <tt class="file docutils literal"><span class="pre">IPYTHONDIR/profile_default/*_config.py</span></tt> to
@@ -483,7 +475,7 @@ controller and engines from IPython.</p>
 <p class="first admonition-title">Warning</p>
 <p class="last">The order of the above operations may be important.  You <em>must</em>
 start the controller before the engines, unless you are reusing connection
-information (via <tt class="docutils literal"><span class="pre">--reuse</span></tt>), in which case ordering is not important.</p>
+information (via <tt class="docutils literal"><span class="pre">--reuse-files</span></tt>), in which case ordering is not important.</p>
 </div>
 <div class="admonition note">
 <p class="first admonition-title">Note</p>
@@ -716,10 +708,10 @@ in some scratch directory.  This can be set with:</p>
           <a href="genindex.html" title="General Index"
              >index</a></li>
         <li class="right" >
-          <a href="parallel_details.html" title="Details of Parallel Computing with IPython"
+          <a href="basic_remote.html" title="Basics of remote execution"
              >next</a> |</li>
         <li class="right" >
-          <a href="parallel_security.html" title="Security details of IPython"
+          <a href="performance.html" title="Performance"
              >previous</a> |</li>
         <li><a href="index.html">home</a>|&nbsp;</li>
         <li><a href="search.html">search</a>|&nbsp;</li>
