@@ -170,9 +170,8 @@ will use pre-computed digit of pi from the website of Professor Yasumasa
 Kanada at the University of Tokyo (<a class="reference external" href="http://www.super-computing.org">http://www.super-computing.org</a>). These
 digits come in a set of text files (<a class="reference external" href="ftp://pi.super-computing.org/.2/pi200m/">ftp://pi.super-computing.org/.2/pi200m/</a>)
 that each have 10 million digits of pi.</p>
-<p>For the parallel calculation, we have copied these files to the local hard
-drives of the compute nodes. A total of 15 of these files will be used, for a
-total of 150 million digits of pi. To make things a little more interesting we
+<p>For the parallel calculation, we download these files to the compute nodes, and
+use one file per node.  To make things a little more interesting we
 will calculate the frequencies of all 2 digits sequences (00-99) and then plot
 the result using a 2D matrix in Matplotlib.</p>
 <p>The overall idea of the calculation is simple: each IPython engine will
@@ -276,7 +275,7 @@ the NumPy package and is shown here:</p>
 <h2>Exercise<a class="headerlink" href="#exercise" title="Permalink to this headline">¶</a></h2>
 <p>Write a script that will run this code for a variety of parameters, using the
 LoadBalancedView.</p>
-<p><a class="reference internal" href="mcdriver.html#mcdriver"><em>Proceed</em></a> to see a solution</p>
+<p><a class="reference internal" href="mcdriver.html#mcdriver"><em>Proceed</em></a> to see a solution.</p>
 </div>
 </div>
 

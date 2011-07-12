@@ -30,7 +30,9 @@ or without git::
 pyzmq-2.1.7 has eggs for various current OSX and Windows Pythons. If we don't have an egg
 for you, you can build & install libzmq from http://www.zeromq.org/area:download.
 
-Macs can get a 32+64b intel libzmq via `homebrew <https://github.com/mxcl/homebrew` with::
+pyzmq `eggs <http://python.org/pypi/pyzmq>`_ and `installers <https://github.com/zeromq/pyzmq/downloads>`_.
+
+Macs can get a 32+64b intel libzmq via `homebrew <https://github.com/mxcl/homebrew>`_ with::
 
     brew install zeromq --universal
 
@@ -39,3 +41,8 @@ pip/easy_installable.
 
 Get the `tutorial code <https://github.com/minrk/scipy-tutorial-2011>`_
 
+Optional dependencies:  I will use SymPy_ and NetworkX_, each for one demo, but they are not critical.
+
+
+.. _SymPy: http://www.sympy.org
+.. _NetworkX: http://networkx.lanl.gov/

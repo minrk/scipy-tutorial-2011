@@ -183,7 +183,7 @@ you want to work with values that exist, you can use global variables.
 And just like the rest of Python, you don't have to specify global variables if you aren't
 assigning to them:
 
-.. sourcecode:: python
+.. sourcecode:: ipython
 
     In [20]: def mul_by_a(b):
        ....:    return a*b
@@ -192,6 +192,27 @@ assigning to them:
     
     In [22]: e0.apply(mul_by_a, 2)
     Out[22]: 20
+
+If you want to do multiple actions on an array, you don't want to send it each time. For
+this, we have a :class`Reference` object. A Reference is just a wrapper for an identifier
+that gets 
+
+.. sourcecode:: ipython
+
+    In [23]: ra = parallel.Reference('a')
+    
+    In [24]: e0['a'] = 10
+    
+    In [25]: def double(x):
+       ....:     return x*2
+    
+    In [26]: double(ra)
+    Out[26]: 20
+    
+    In [27]: e0['a'] = 5
+    
+    In [28]: double(ra)
+    Out[28]: 10
 
 
 Moving Python objects around

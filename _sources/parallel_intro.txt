@@ -7,7 +7,7 @@ Overview and getting started
 Introduction
 ============
 
-This section gives an overview of IPython's sophisticated and powerful
+This section gives an overview of IPython's
 architecture for parallel and distributed computing. This architecture
 abstracts out parallelism in a very general way, which enables IPython to
 support many different styles of parallelism including:

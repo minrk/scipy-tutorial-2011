@@ -84,9 +84,8 @@ Kanada at the University of Tokyo (http://www.super-computing.org). These
 digits come in a set of text files (ftp://pi.super-computing.org/.2/pi200m/)
 that each have 10 million digits of pi.
 
-For the parallel calculation, we have copied these files to the local hard
-drives of the compute nodes. A total of 15 of these files will be used, for a
-total of 150 million digits of pi. To make things a little more interesting we
+For the parallel calculation, we download these files to the compute nodes, and
+use one file per node.  To make things a little more interesting we
 will calculate the frequencies of all 2 digits sequences (00-99) and then plot
 the result using a 2D matrix in Matplotlib.
 
@@ -142,5 +141,7 @@ Exercise
 Write a script that will run this code for a variety of parameters, using the
 LoadBalancedView.
 
-:ref:`Proceed <mcdriver>` to see a solution
+
+
+:ref:`Proceed <mcdriver>` to see a solution.
 

@@ -24,7 +24,7 @@
     <script type="text/javascript" src="_static/doctools.js"></script>
     <link rel="top" title="IPython Tutorial v0.1 documentation" href="index.html" />
     <link rel="next" title="IPython’s Direct interface" href="parallel_multiengine.html" />
-    <link rel="prev" title="Performance" href="performance.html" /> 
+    <link rel="prev" title="Starting the IPython controller and engines" href="parallel_process.html" /> 
   </head>
   <body>
 
@@ -42,7 +42,7 @@
           <a href="parallel_multiengine.html" title="IPython’s Direct interface"
              accesskey="N">next</a> |</li>
         <li class="right" >
-          <a href="performance.html" title="Performance"
+          <a href="parallel_process.html" title="Starting the IPython controller and engines"
              accesskey="P">previous</a> |</li>
         <li><a href="index.html">home</a>|&nbsp;</li>
         <li><a href="search.html">search</a>|&nbsp;</li>
@@ -81,8 +81,8 @@
 </ul>
 
   <h4>Previous topic</h4>
-  <p class="topless"><a href="performance.html"
-                        title="previous chapter">Performance</a></p>
+  <p class="topless"><a href="parallel_process.html"
+                        title="previous chapter">Starting the IPython controller and engines</a></p>
   <h4>Next topic</h4>
   <p class="topless"><a href="parallel_multiengine.html"
                         title="next chapter">IPython&#8217;s Direct interface</a></p>
@@ -250,13 +250,33 @@ you want to work with values that exist, you can use global variables.</p>
 </div>
 <p>And just like the rest of Python, you don&#8217;t have to specify global variables if you aren&#8217;t
 assigning to them:</p>
-<div class="highlight-python"><pre>In [20]: def mul_by_a(b):
-   ....:    return a*b
+<div class="highlight-ipython"><div class="highlight"><pre><span class="gp">In [20]: </span><span class="k">def</span> <span class="nf">mul_by_a</span><span class="p">(</span><span class="n">b</span><span class="p">):</span>
+<span class="gp">   ....:</span>    <span class="k">return</span> <span class="n">a</span><span class="o">*</span><span class="n">b</span>
 
-In [21]: e0['a'] = 10
+<span class="gp">In [21]: </span><span class="n">e0</span><span class="p">[</span><span class="s">&#39;a&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">10</span>
 
-In [22]: e0.apply(mul_by_a, 2)
-Out[22]: 20</pre>
+<span class="gp">In [22]: </span><span class="n">e0</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">mul_by_a</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+<span class="gr">Out[22]: </span><span class="mi">20</span>
+</pre></div>
+</div>
+<p>If you want to do multiple actions on an array, you don&#8217;t want to send it each time. For
+this, we have a :class`Reference` object. A Reference is just a wrapper for an identifier
+that gets</p>
+<div class="highlight-ipython"><div class="highlight"><pre><span class="gp">In [23]: </span><span class="n">ra</span> <span class="o">=</span> <span class="n">parallel</span><span class="o">.</span><span class="n">Reference</span><span class="p">(</span><span class="s">&#39;a&#39;</span><span class="p">)</span>
+
+<span class="gp">In [24]: </span><span class="n">e0</span><span class="p">[</span><span class="s">&#39;a&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">10</span>
+
+<span class="gp">In [25]: </span><span class="k">def</span> <span class="nf">double</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+<span class="gp">   ....:</span>     <span class="k">return</span> <span class="n">x</span><span class="o">*</span><span class="mi">2</span>
+
+<span class="gp">In [26]: </span><span class="n">double</span><span class="p">(</span><span class="n">ra</span><span class="p">)</span>
+<span class="gr">Out[26]: </span><span class="mi">20</span>
+
+<span class="gp">In [27]: </span><span class="n">e0</span><span class="p">[</span><span class="s">&#39;a&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">5</span>
+
+<span class="gp">In [28]: </span><span class="n">double</span><span class="p">(</span><span class="n">ra</span><span class="p">)</span>
+<span class="gr">Out[28]: </span><span class="mi">10</span>
+</pre></div>
 </div>
 </div>
 </div>
@@ -511,7 +531,7 @@ let&#8217;s try some actual parallel work.</p>
           <a href="parallel_multiengine.html" title="IPython’s Direct interface"
              >next</a> |</li>
         <li class="right" >
-          <a href="performance.html" title="Performance"
+          <a href="parallel_process.html" title="Starting the IPython controller and engines"
              >previous</a> |</li>
         <li><a href="index.html">home</a>|&nbsp;</li>
         <li><a href="search.html">search</a>|&nbsp;</li>
